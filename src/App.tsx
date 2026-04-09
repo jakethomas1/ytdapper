@@ -8,19 +8,21 @@ import InputLinkComponent from "./Components/InputLinkComponent";
 import CurrentDownloads from "./Components/CurrentDownloads";
 import "./App.css";
 
+interface DownloadItem {
+  id: string;
+  filename: string;
+  progress: string;
+  status: "downloading" | "complete" | "error";
+}
+
 function App() {
   const [destination, setDestination] = useState<string>("Downloads");
   const [folderPath, setFolderPath] = useState<string>("");
   const [url, setUrl] = useState("");
   const [quality, setQuality] = useState("720");
-  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [logLines, setLogLines] = useState<string[]>([]);
-  const [logFilePath, setLogFilePath] = useState<string | null>(null);
-  const [downloads] = useState<{id: string; filename: string; progress: string; status: "downloading" | "complete" | "error"}[]>([]);
+  const [downloads, setDownloads] = useState<DownloadItem[]>([]);
   const unlistenRef = useRef<UnlistenFn | null>(null);
-  const logPreviewRef = useRef<HTMLPreElement>(null);
-  const rafScheduledRef = useRef(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -67,6 +69,26 @@ function App() {
     }
   }
 
+  function parseDownloadOutput(line: string): { filename?: string; progress?: string } {
+    const result: { filename?: string; progress?: string } = {};
+
+    const progressMatch = line.match(/(\d+(?:\.\d+)?)%/);
+    if (progressMatch) {
+      result.progress = progressMatch[1] + "%";
+    }
+
+    const filenameMatch = line.match(/\[download\]\s*Destination:\s*(.+)/);
+    const fullPath = filenameMatch?.[1] ?? ""
+    const fileName = fullPath.split(/[\\/]/).pop() ?? ""
+    if (filenameMatch) {
+      result.filename = fileName ;
+    }
+
+    console.log("parseDownloadOutput:", { line: line.slice(0, 50), result });
+
+    return result;
+  }
+
   async function handleDownload() {
     if (!url.trim()) {
       setError("Please enter a URL");
@@ -78,52 +100,56 @@ function App() {
     }
 
     setError("");
-    setLogLines([]);
-    setLogFilePath(null);
-    setIsDownloading(true);
+
+    const downloadId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const newDownload: DownloadItem = {
+      id: downloadId,
+      filename: "Starting...",
+      progress: "0%",
+      status: "downloading",
+    };
+
+    setDownloads((prev) => [...prev, newDownload]);
 
     const unlisten = await listen<string>("yt-dlp-output", (event) => {
-      setLogLines((prev) => {
-        const newLines = [...prev.slice(-20), event.payload];
-        
-        if (!rafScheduledRef.current) {
-          rafScheduledRef.current = true;
-          requestAnimationFrame(() => {
-            if (logPreviewRef.current) {
-              logPreviewRef.current.scrollTop = logPreviewRef.current.scrollHeight;
-            }
-            rafScheduledRef.current = false;
-          });
-        }
-        
-        return newLines;
-      });
+      console.log("yt-dlp-output event:", event.payload);
+      const parsed = parseDownloadOutput(event.payload);
+
+      setDownloads((prev) =>
+        prev.map((d) => {
+          if (d.id === downloadId) {
+            return {
+              ...d,
+              filename: parsed.filename || d.filename,
+              progress: parsed.progress || d.progress,
+            };
+          }
+          return d;
+        })
+      );
     });
     unlistenRef.current = unlisten;
 
     try {
-      const result = await invoke<string>("download_video", {
+      await invoke<string>("download_video", {
         url: url,
         quality: quality,
         outputDir: folderPath,
       });
-      setLogFilePath(result);
+
+      setDownloads((prev) =>
+        prev.map((d) =>
+          d.id === downloadId ? { ...d, status: "complete", progress: "100%" } : d
+        )
+      );
     } catch (e) {
+      setDownloads((prev) =>
+        prev.map((d) => (d.id === downloadId ? { ...d, status: "error" } : d))
+      );
       setError(String(e));
     } finally {
-      setIsDownloading(false);
       unlisten();
       unlistenRef.current = null;
-    }
-  }
-
-  async function openLogFile() {
-    if (logFilePath) {
-      try {
-        await invoke("open_in_default_app", { path: logFilePath });
-      } catch (e) {
-        setError(`Failed to open log: ${e}`);
-      }
     }
   }
 
@@ -136,37 +162,19 @@ function App() {
         onFolderChange={(path, name) => {
           setFolderPath(path);
           setDestination(name);
-          saveSettings(path, name, quality);
         }}
       />
-
       <InputLinkComponent
         url={url}
         quality={quality}
         error={error}
         onUrlChange={setUrl}
-        onQualityChange={(q) => {
-          setQuality(q);
-          saveSettings(folderPath, destination, q);
+        onQualityChange={(newQuality) => {
+          setQuality(newQuality);
+          saveSettings(folderPath, destination, newQuality);
         }}
         onDownload={handleDownload}
       />
-
-      {isDownloading && <span className="status-text">Downloading...</span>}
-      {logLines.length > 0 && (
-        <div className="log-preview">
-          <div className="log-preview-header">
-            <span>Output Preview</span>
-            {!isDownloading && logFilePath && (
-              <button className="log-preview-open" onClick={openLogFile}>Open Full Log</button>
-            )}
-          </div>
-          <pre className="log-preview-content" ref={logPreviewRef}>
-            {logLines.slice(-4).join("\n")}
-          </pre>
-        </div>
-      )}
-
       <CurrentDownloads downloads={downloads} />
     </div>
   );

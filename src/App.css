@@ -156,6 +156,11 @@ body {
   color: #2e7d32;
 }
 
+.qual-arg-wrapper {
+  display: flex;
+  justify-content :space-between;
+}
+
 .quality-select {
   width: fit-content;
   flex: none;
@@ -185,39 +190,9 @@ body {
   }
 }
 
-.status-text {
-  font-size: 14px;
-  color: #ffffff;
-  opacity: 0.9;
-}
-
-.open-log-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-family: inherit;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.open-log-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.open-log-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
 .current-downloads {
   margin-left: 0px;
-  margin-top: 8px;
+  margin-top: 4px;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   overflow: hidden;
@@ -241,7 +216,7 @@ body {
 }
 
 .current-downloads-content {
-  height: 150px;
+  height: 200px;
   overflow-y: auto;
   padding: 8px 0;
 }
@@ -298,13 +273,3 @@ body {
   color: #ff6b6b;
 }
 
-.error-message {
-  margin-left: 112px;
-  margin-top: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #ffcccc;
-  background: rgba(255, 0, 0, 0.15);
-  border: 1px solid rgba(255, 100, 100, 0.3);
-  border-radius: 6px;
-}

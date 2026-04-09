@@ -54,6 +54,11 @@ export default function InputLinkComponent({
             </svg>
           </button>
         </div>
+        <div className="qual-arg-wrapper">
+        <label>
+          <input type="checkbox" id="audio-only-select" className="audio-only"/>
+          Audio-only
+        </label>
         <select
           id="quality-select"
           className="quality-select"
@@ -66,6 +71,8 @@ export default function InputLinkComponent({
             </option>
           ))}
         </select>
+        
+        </div>
       </div>
       {error && <div className="error-message">{error}</div>}
     </div>

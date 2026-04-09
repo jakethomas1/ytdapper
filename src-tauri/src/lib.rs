@@ -72,7 +72,11 @@ async fn download_video(
     let log_path = std::env::temp_dir().join(format!("ytdapper_{}.log", timestamp));
 
     let mut child = Command::new(&yt_dlp_path)
+        .env("PYTHONUNBUFFERED", "1")
         .args([
+            "--progress",
+            "--newline",
+            "--no-colors",
             "-f", &format!("best[height<={}]", quality),
             "-P", &output_dir,
             &url,
