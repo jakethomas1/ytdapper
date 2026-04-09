@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "hello-world",
+  "productName": "YTDapper",
   "version": "0.1.0",
-  "identifier": "test",
+  "identifier": "com.ydapper.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,14 @@
   "app": {
     "windows": [
       {
-        "title": "hello-world",
-        "width": 800,
-        "height": 600
+        "title": "YTDapper",
+        "width": 600,
+        "height": 460,
+        "decorations": true,
+        "transparent": false,
+        "resizable": false,
+        "maximizable": false,
+        "fullscreen": false
       }
     ],
     "security": {
