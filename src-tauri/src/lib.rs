@@ -60,6 +60,7 @@ async fn download_video(
     url: String,
     quality: String,
     output_dir: String,
+    is_audio_only: bool,
 ) -> Result<String, String> {
     let yt_dlp_path = find_yt_dlp().ok_or_else(|| {
         "yt-dlp not found. See README.md or run setup.bat (Windows) / setup.sh (Linux) to download it.".to_string()
@@ -71,20 +72,42 @@ async fn download_video(
         .unwrap_or(0);
     let log_path = std::env::temp_dir().join(format!("ytdapper_{}.log", timestamp));
 
-    let mut child = Command::new(&yt_dlp_path)
-        .env("PYTHONUNBUFFERED", "1")
-        .args([
-            "--progress",
-            "--newline",
-            "--no-colors",
-            "-f", &format!("best[height<={}]", quality),
-            "-P", &output_dir,
-            &url,
-        ])
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| e.to_string())?;
+    let output_template = format!("{}/%(title)s.%(ext)s", output_dir);
+
+    let mut child = if is_audio_only {
+        Command::new(&yt_dlp_path)
+            .env("PYTHONUNBUFFERED", "1")
+            .args([
+                "--progress",
+                "--newline",
+                "--no-colors",
+                "-f", "bestaudio/best",
+                "-x",
+                "--audio-format", "mp3",
+                "--embed-thumbnail",
+                "-o", &output_template,
+                &url,
+            ])
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .map_err(|e| e.to_string())?
+    } else {
+        Command::new(&yt_dlp_path)
+            .env("PYTHONUNBUFFERED", "1")
+            .args([
+                "--progress",
+                "--newline",
+                "--no-colors",
+                "-f", &format!("best[height<={}]", quality),
+                "-o", &output_template,
+                &url,
+            ])
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .map_err(|e| e.to_string())?
+    };
 
     let stdout = child.stdout.take().expect("stdout not captured");
     let stderr = child.stderr.take().expect("stderr not captured");

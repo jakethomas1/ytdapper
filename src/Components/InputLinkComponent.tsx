@@ -1,9 +1,11 @@
 interface InputLinkComponentProps {
   url: string;
   quality: string;
+  isAudioOnly: boolean;
   error: string;
   onUrlChange: (url: string) => void;
   onQualityChange: (quality: string) => void;
+  onAudioOnlyChange: (value: boolean) => void;
   onDownload: () => void;
 }
 
@@ -22,9 +24,11 @@ const QUALITY_OPTIONS = [
 export default function InputLinkComponent({
   url,
   quality,
+  isAudioOnly,
   error,
   onUrlChange,
   onQualityChange,
+  onAudioOnlyChange,
   onDownload,
 }: InputLinkComponentProps) {
   return (
@@ -56,22 +60,46 @@ export default function InputLinkComponent({
         </div>
         <div className="qual-arg-wrapper">
         <label>
-          <input type="checkbox" id="audio-only-select" className="audio-only"/>
+          <input 
+            type="checkbox" 
+            id="audio-only-select" 
+            className="audio-only"
+            checked={isAudioOnly}
+            onChange={(e) => onAudioOnlyChange(e.target.checked)}
+          />
           Audio-only
         </label>
-        <select
-          id="quality-select"
-          className="quality-select"
-          value={quality}
-          onChange={(e) => onQualityChange(e.target.value)}
-        >
-          {QUALITY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        
+        {!isAudioOnly && (
+        <div className="quality-select-wrapper">
+          <select
+            id="quality-select"
+            className="quality-select"
+            value={quality}
+            onChange={(e) => onQualityChange(e.target.value)}
+          >
+            {QUALITY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <span className="quality-select-arrow">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#333"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
+        </div>
+        )}
         </div>
       </div>
       {error && <div className="error-message">{error}</div>}

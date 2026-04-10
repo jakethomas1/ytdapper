@@ -20,6 +20,7 @@ function App() {
   const [folderPath, setFolderPath] = useState<string>("");
   const [url, setUrl] = useState("");
   const [quality, setQuality] = useState("720");
+  const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [error, setError] = useState<string>("");
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
   const unlistenRef = useRef<UnlistenFn | null>(null);
@@ -79,7 +80,10 @@ function App() {
 
     const filenameMatch = line.match(/\[download\]\s*Destination:\s*(.+)/);
     const fullPath = filenameMatch?.[1] ?? ""
-    const fileName = fullPath.split(/[\\/]/).pop() ?? ""
+    let fileName = fullPath.split(/[\\/]/).pop() ?? ""
+    if (isAudioOnly && fileName) { // Could parse the download output again for file ext but nty
+      fileName = fileName.replace(/\.[^.]+$/, ".mp3"); 
+    }
     if (filenameMatch) {
       result.filename = fileName ;
     }
@@ -135,6 +139,7 @@ function App() {
         url: url,
         quality: quality,
         outputDir: folderPath,
+        isAudioOnly: isAudioOnly,
       });
 
       setDownloads((prev) =>
@@ -167,11 +172,18 @@ function App() {
       <InputLinkComponent
         url={url}
         quality={quality}
+        isAudioOnly={isAudioOnly}
         error={error}
         onUrlChange={setUrl}
         onQualityChange={(newQuality) => {
           setQuality(newQuality);
           saveSettings(folderPath, destination, newQuality);
+        }}
+        onAudioOnlyChange={(value) => {
+          setIsAudioOnly(value);
+          if (value) {
+            setQuality("720");
+          }
         }}
         onDownload={handleDownload}
       />
