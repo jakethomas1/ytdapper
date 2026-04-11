@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
@@ -12,7 +12,7 @@ interface DownloadItem {
   id: string;
   filename: string;
   progress: string;
-  status: "downloading" | "complete" | "error";
+  status: "downloading" | "complete" | "error" | "cancelled";
 }
 
 function App() {
@@ -23,7 +23,8 @@ function App() {
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [error, setError] = useState<string>("");
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
-  const unlistenRef = useRef<UnlistenFn | null>(null);
+  const unlistenOutputRef = useRef<UnlistenFn | null>(null);
+  const unlistenCompleteRef = useRef<UnlistenFn | null>(null);
 
   useEffect(() => {
     async function loadSettings() {
@@ -41,7 +42,53 @@ function App() {
       }
     }
     loadSettings();
-  }, []);
+
+    async function setupListeners() {
+      unlistenOutputRef.current = await listen<[string, string]>("yt-dlp-output", (event) => {
+        const [downloadId, line] = event.payload;
+        console.log("yt-dlp-output event:", downloadId, line);
+        const parsed = parseDownloadOutput(line, isAudioOnly);
+
+        setDownloads((prev) =>
+          prev.map((d) => {
+            if (d.id === downloadId) {
+              return {
+                ...d,
+                filename: parsed.filename || d.filename,
+                progress: parsed.progress || d.progress,
+              };
+            }
+            return d;
+          })
+        );
+      });
+
+      unlistenCompleteRef.current = await listen<[string, string, string]>("yt-dlp-complete", (event) => {
+        const [downloadId, status, message] = event.payload;
+        console.log("yt-dlp-complete event:", downloadId, status, message);
+
+        setDownloads((prev) =>
+          prev.map((d) => {
+            if (d.id === downloadId) {
+              if (status === "complete") {
+                return { ...d, status: "complete", progress: "100%" };
+              } else if (status === "error") {
+                setError(message);
+                return { ...d, status: "error" };
+              }
+            }
+            return d;
+          })
+        );
+      });
+    }
+    setupListeners();
+
+    return () => {
+      unlistenOutputRef.current?.();
+      unlistenCompleteRef.current?.();
+    };
+  }, [isAudioOnly]);
 
   async function saveSettings(folder: string, folderName: string, qual: string) {
     try {
@@ -70,7 +117,7 @@ function App() {
     }
   }
 
-  function parseDownloadOutput(line: string): { filename?: string; progress?: string } {
+  function parseDownloadOutput(line: string, audioOnly: boolean): { filename?: string; progress?: string } {
     const result: { filename?: string; progress?: string } = {};
 
     const progressMatch = line.match(/(\d+(?:\.\d+)?)%/);
@@ -81,14 +128,12 @@ function App() {
     const filenameMatch = line.match(/\[download\]\s*Destination:\s*(.+)/);
     const fullPath = filenameMatch?.[1] ?? ""
     let fileName = fullPath.split(/[\\/]/).pop() ?? ""
-    if (isAudioOnly && fileName) { // Could parse the download output again for file ext but nty
+    if (audioOnly && fileName) {
       fileName = fileName.replace(/\.[^.]+$/, ".mp3"); 
     }
     if (filenameMatch) {
-      result.filename = fileName ;
+      result.filename = fileName;
     }
-
-    console.log("parseDownloadOutput:", { line: line.slice(0, 50), result });
 
     return result;
   }
@@ -105,7 +150,13 @@ function App() {
 
     setError("");
 
-    const downloadId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const downloadId = await invoke<string>("download_video", {
+      url: url,
+      quality: quality,
+      outputDir: folderPath,
+      isAudioOnly: isAudioOnly,
+    });
+
     const newDownload: DownloadItem = {
       id: downloadId,
       filename: "Starting...",
@@ -114,47 +165,17 @@ function App() {
     };
 
     setDownloads((prev) => [...prev, newDownload]);
+    setUrl("");
+  }
 
-    const unlisten = await listen<string>("yt-dlp-output", (event) => {
-      console.log("yt-dlp-output event:", event.payload);
-      const parsed = parseDownloadOutput(event.payload);
-
-      setDownloads((prev) =>
-        prev.map((d) => {
-          if (d.id === downloadId) {
-            return {
-              ...d,
-              filename: parsed.filename || d.filename,
-              progress: parsed.progress || d.progress,
-            };
-          }
-          return d;
-        })
-      );
-    });
-    unlistenRef.current = unlisten;
-
+  async function handleCancel(downloadId: string) {
     try {
-      await invoke<string>("download_video", {
-        url: url,
-        quality: quality,
-        outputDir: folderPath,
-        isAudioOnly: isAudioOnly,
-      });
-
+      await invoke("cancel_download", { downloadId });
       setDownloads((prev) =>
-        prev.map((d) =>
-          d.id === downloadId ? { ...d, status: "complete", progress: "100%" } : d
-        )
+        prev.map((d) => (d.id === downloadId ? { ...d, status: "cancelled" } : d))
       );
     } catch (e) {
-      setDownloads((prev) =>
-        prev.map((d) => (d.id === downloadId ? { ...d, status: "error" } : d))
-      );
-      setError(String(e));
-    } finally {
-      unlisten();
-      unlistenRef.current = null;
+      console.error("Failed to cancel download:", e);
     }
   }
 
@@ -187,7 +208,7 @@ function App() {
         }}
         onDownload={handleDownload}
       />
-      <CurrentDownloads downloads={downloads} />
+      <CurrentDownloads downloads={downloads} onCancel={handleCancel} />
     </div>
   );
 }

@@ -1,10 +1,24 @@
+use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
-use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
+
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::Emitter;
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::Command;
+use tokio::sync::mpsc;
+
+struct DownloadHandle {
+    pid: u32,
+    log_path: PathBuf,
+    kill_tx: mpsc::Sender<()>,
+}
+
+struct DownloadState {
+    downloads: HashMap<String, DownloadHandle>,
+}
 
 fn find_yt_dlp() -> Option<PathBuf> {
     let cwd = env::current_dir().ok();
@@ -49,9 +63,66 @@ fn find_yt_dlp() -> Option<PathBuf> {
     None
 }
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+#[cfg(windows)]
+fn send_ctrl_c(pid: u32) -> Result<(), String> {
+    use windows::Win32::System::Console::GenerateConsoleCtrlEvent;
+    use windows::Win32::System::Console::CTRL_C_EVENT;
+
+    unsafe {
+        let result = GenerateConsoleCtrlEvent(CTRL_C_EVENT, pid);
+        if result.is_err() {
+            return Err(format!("Failed to send CTRL+C to process {}", pid));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn send_sigint(pid: u32) -> Result<(), String> {
+    use libc::kill;
+    use libc::SIGINT;
+
+    unsafe {
+        if kill(pid as libc::pid_t, SIGINT) != 0 {
+            return Err(format!("Failed to send SIGINT to process {}", pid));
+        }
+    }
+    Ok(())
+}
+
+fn create_command(yt_dlp_path: &PathBuf, url: &str, quality: &str, output_template: &str, is_audio_only: bool) -> Command {
+    let mut cmd = Command::new(yt_dlp_path);
+    cmd.env("PYTHONUNBUFFERED", "1");
+
+    #[cfg(windows)]
+    cmd.creation_flags(0x00000200);
+
+    if is_audio_only {
+        cmd.args([
+            "--progress",
+            "--newline",
+            "--no-colors",
+            "-f", "bestaudio/best",
+            "-x",
+            "--audio-format", "mp3",
+            "--embed-thumbnail",
+            "-o", output_template,
+            url,
+        ]);
+    } else {
+        cmd.args([
+            "--progress",
+            "--newline",
+            "--no-colors",
+            "-f", &format!("best[height<={}]", quality),
+            "-o", output_template,
+            url,
+        ]);
+    }
+
+    cmd.stdout(std::process::Stdio::piped());
+    cmd.stderr(std::process::Stdio::piped());
+    cmd
 }
 
 #[tauri::command]
@@ -61,6 +132,7 @@ async fn download_video(
     quality: String,
     output_dir: String,
     is_audio_only: bool,
+    state: tauri::State<'_, Arc<Mutex<DownloadState>>>,
 ) -> Result<String, String> {
     let yt_dlp_path = find_yt_dlp().ok_or_else(|| {
         "yt-dlp not found. See README.md or run setup.bat (Windows) / setup.sh (Linux) to download it.".to_string()
@@ -74,95 +146,115 @@ async fn download_video(
 
     let output_template = format!("{}/%(title)s.%(ext)s", output_dir);
 
-    let mut child = if is_audio_only {
-        Command::new(&yt_dlp_path)
-            .env("PYTHONUNBUFFERED", "1")
-            .args([
-                "--progress",
-                "--newline",
-                "--no-colors",
-                "-f", "bestaudio/best",
-                "-x",
-                "--audio-format", "mp3",
-                "--embed-thumbnail",
-                "-o", &output_template,
-                &url,
-            ])
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()
-            .map_err(|e| e.to_string())?
-    } else {
-        Command::new(&yt_dlp_path)
-            .env("PYTHONUNBUFFERED", "1")
-            .args([
-                "--progress",
-                "--newline",
-                "--no-colors",
-                "-f", &format!("best[height<={}]", quality),
-                "-o", &output_template,
-                &url,
-            ])
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()
-            .map_err(|e| e.to_string())?
-    };
+    let mut cmd = create_command(&yt_dlp_path, &url, &quality, &output_template, is_audio_only);
+    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
 
-    let stdout = child.stdout.take().expect("stdout not captured");
-    let stderr = child.stderr.take().expect("stderr not captured");
+    let download_id = format!("download_{}", timestamp);
+    let pid = child.id().ok_or("Failed to get process ID")?;
 
-    let stdout_reader = BufReader::new(stdout);
-    let stderr_reader = BufReader::new(stderr);
+    let stdout = child.stdout.take().ok_or("stdout not captured")?;
+    let stderr = child.stderr.take().ok_or("stderr not captured")?;
 
-    let mut stdout_lines = stdout_reader.lines();
-    let mut stderr_lines = stderr_reader.lines();
+    let (kill_tx, mut kill_rx) = mpsc::channel::<()>(1);
 
-    loop {
-        tokio::select! {
-            line = stdout_lines.next_line() => {
-                match line {
-                    Ok(Some(line)) => {
-                        let line_with_newline = format!("{}\n", line);
-                        tokio::fs::write(&log_path, &line_with_newline)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        app_handle.emit("yt-dlp-output", line).map_err(|e| e.to_string())?;
+    let log_path_clone = log_path.clone();
+    let app_handle_clone = app_handle.clone();
+    let download_id_clone = download_id.clone();
+    let state_clone = Arc::clone(&state);
+
+    tokio::spawn(async move {
+        let stdout_reader = BufReader::new(stdout);
+        let stderr_reader = BufReader::new(stderr);
+
+        let mut stdout_lines = stdout_reader.lines();
+        let mut stderr_lines = stderr_reader.lines();
+
+        loop {
+            tokio::select! {
+                _ = kill_rx.recv() => {
+                    {
+                        let mut state = state_clone.lock().unwrap();
+                        state.downloads.remove(&download_id_clone);
                     }
-                    Ok(None) => {}
-                    Err(e) => eprintln!("stdout error: {}", e),
+                    let _ = app_handle_clone.emit("yt-dlp-complete", (&download_id_clone, "cancelled", "Download cancelled by user".to_string()));
+                    let _ = child.kill().await;
+                    break;
                 }
-            }
-            line = stderr_lines.next_line() => {
-                match line {
-                    Ok(Some(line)) => {
-                        let line_with_newline = format!("{}\n", line);
-                        tokio::fs::write(&log_path, &line_with_newline)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        app_handle.emit("yt-dlp-output", line).map_err(|e| e.to_string())?;
+                line = stdout_lines.next_line() => {
+                    match line {
+                        Ok(Some(line)) => {
+                            let line_with_newline = format!("{}\n", line);
+                            let _ = tokio::fs::write(&log_path_clone, &line_with_newline).await;
+                            let _ = app_handle_clone.emit("yt-dlp-output", (&download_id_clone, line));
+                        }
+                        Ok(None) => {}
+                        Err(e) => eprintln!("stdout error: {}", e),
                     }
-                    Ok(None) => {}
-                    Err(e) => eprintln!("stderr error: {}", e),
                 }
-            }
-            status = child.wait() => {
-                match status {
-                    Ok(status) => {
-                        if status.success() {
-                            return Ok(log_path.to_string_lossy().to_string());
-                        } else {
-                            return Err(format!(
-                                "Download failed with exit code: {:?}\nLog file: {}",
-                                status.code(),
-                                log_path.display()
-                            ));
+                line = stderr_lines.next_line() => {
+                    match line {
+                        Ok(Some(line)) => {
+                            let line_with_newline = format!("{}\n", line);
+                            let _ = tokio::fs::write(&log_path_clone, &line_with_newline).await;
+                            let _ = app_handle_clone.emit("yt-dlp-output", (&download_id_clone, line));
+                        }
+                        Ok(None) => {}
+                        Err(e) => eprintln!("stderr error: {}", e),
+                    }
+                }
+                status = child.wait() => {
+                    {
+                        let mut state = state_clone.lock().unwrap();
+                        state.downloads.remove(&download_id_clone);
+                    }
+
+                    match status {
+                        Ok(status) => {
+                            if status.success() {
+                                let _ = app_handle_clone.emit("yt-dlp-complete", (&download_id_clone, "complete", log_path_clone.to_string_lossy().to_string()));
+                            } else {
+                                let _ = app_handle_clone.emit("yt-dlp-complete", (&download_id_clone, "error", format!("Download failed with exit code: {:?}", status.code())));
+                            }
+                        }
+                        Err(e) => {
+                            let _ = app_handle_clone.emit("yt-dlp-complete", (&download_id_clone, "error", e.to_string()));
                         }
                     }
-                    Err(e) => return Err(e.to_string()),
+                    break;
                 }
             }
         }
+    });
+
+    {
+        let mut state = state.lock().unwrap();
+        state.downloads.insert(download_id.clone(), DownloadHandle { pid, log_path, kill_tx });
+    }
+
+    Ok(download_id)
+}
+
+#[tauri::command]
+fn cancel_download(
+    download_id: String,
+    state: tauri::State<'_, Arc<Mutex<DownloadState>>>,
+) -> Result<(), String> {
+    let mut state = state.lock().unwrap();
+
+    if let Some(handle) = state.downloads.remove(&download_id) {
+        let pid = handle.pid;
+
+        let _ = handle.kill_tx.try_send(());
+
+        #[cfg(windows)]
+        send_ctrl_c(pid)?;
+
+        #[cfg(unix)]
+        send_sigint(pid)?;
+
+        Ok(())
+    } else {
+        Err("Download not found or already completed".to_string())
     }
 }
 
@@ -173,7 +265,12 @@ fn open_in_default_app(path: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let download_state = Arc::new(Mutex::new(DownloadState {
+        downloads: HashMap::new(),
+    }));
+
     tauri::Builder::default()
+        .manage(download_state)
         .setup(|app| {
             let import_item = MenuItemBuilder::new("Import List...")
                 .id("import_list")
@@ -222,7 +319,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![greet, download_video, open_in_default_app])
+        .invoke_handler(tauri::generate_handler![download_video, cancel_download, open_in_default_app])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

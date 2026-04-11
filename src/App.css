@@ -285,3 +285,25 @@ body {
   color: #ff6b6b;
 }
 
+.download-item-cancel {
+  margin-left: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  color: #ffffff;
+  background: rgba(255, 107, 107, 0.8);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.download-item-cancel:hover {
+  background: rgba(255, 107, 107, 1);
+}
+
+.download-item-cancelled .download-item-filename,
+.download-item-cancelled .download-item-progress {
+  color: #ffa726;
+}
+
