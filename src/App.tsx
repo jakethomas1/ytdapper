@@ -139,7 +139,9 @@ function App() {
   }
 
   async function handleDownload() {
-    if (!url.trim()) {
+    const urls = url.split('\n').filter(u => u.trim());
+    
+    if (urls.length === 0) {
       setError("Please enter a URL");
       return;
     }
@@ -150,21 +152,24 @@ function App() {
 
     setError("");
 
-    const downloadId = await invoke<string>("download_video", {
-      url: url,
-      quality: quality,
-      outputDir: folderPath,
-      isAudioOnly: isAudioOnly,
-    });
+    for (const urlStr of urls) {
+      const downloadId = await invoke<string>("download_video", {
+        url: urlStr.trim(),
+        quality: quality,
+        outputDir: folderPath,
+        isAudioOnly: isAudioOnly,
+      });
 
-    const newDownload: DownloadItem = {
-      id: downloadId,
-      filename: "Starting...",
-      progress: "0%",
-      status: "downloading",
-    };
+      const newDownload: DownloadItem = {
+        id: downloadId,
+        filename: "Starting...",
+        progress: "0%",
+        status: "downloading",
+      };
 
-    setDownloads((prev) => [...prev, newDownload]);
+      setDownloads((prev) => [newDownload, ...prev]);
+    }
+    
     setUrl("");
   }
 

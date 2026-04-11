@@ -140,7 +140,7 @@ async fn download_video(
 
     let timestamp = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
-        .map(|d| d.as_secs())
+        .map(|d| d.as_millis())
         .unwrap_or(0);
     let log_path = std::env::temp_dir().join(format!("ytdapper_{}.log", timestamp));
 

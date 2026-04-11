@@ -1,9 +1,11 @@
+import { useRef, useEffect } from "react";
+
 interface InputLinkComponentProps {
   url: string;
   quality: string;
   isAudioOnly: boolean;
   error: string;
-  onUrlChange: (url: string) => void;
+  onUrlChange: (url: string | ((prev: string) => string)) => void;
   onQualityChange: (quality: string) => void;
   onAudioOnlyChange: (value: boolean) => void;
   onDownload: () => void;
@@ -31,18 +33,73 @@ export default function InputLinkComponent({
   onAudioOnlyChange,
   onDownload,
 }: InputLinkComponentProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onUrlChange(e.target.value);
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(Math.max(74, textarea.scrollHeight), 120) + 'px';
+    }
+  };
+
+  const handleClear = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '74px';
+    }
+    onUrlChange("");
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      onUrlChange((prev) => prev + text + "\n");
+      textareaRef.current?.focus();
+    } catch (e) {
+      console.error("Failed to read clipboard:", e);
+    }
+  };
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const handlePasteEvent = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData('text/plain') ?? '';
+      e.preventDefault();
+      document.execCommand('insertText', false, text + '\n');
+      textarea.focus();
+    };
+
+    textarea.addEventListener('paste', handlePasteEvent);
+
+    return () => {
+      textarea.removeEventListener('paste', handlePasteEvent);
+    };
+  }, []);
+
   return (
     <div className="input-row">
       <span className="row-label">Download:</span>
       <div className="download-section">
         <div className="text-input-wrapper">
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             className="url-input"
-            placeholder="Paste YouTube URL here..."
+            placeholder="Paste Video URL here..."
             value={url}
-            onChange={(e) => onUrlChange(e.target.value)}
+            onChange={handleInput}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                onDownload();
+              }
+            }}
           />
+          <span className={url ? "paste-btn clear-btn" : "paste-btn"} onClick={url ? handleClear : handlePaste} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && (url ? handleClear : handlePaste)()}>
+            <img src={url ? "/icons/clear.svg" : "/icons/clipboard.svg"} alt={url ? "Clear" : "Paste"} />
+          </span>
           <button className="download-btn" onClick={onDownload}>
             <svg
               viewBox="0 0 24 24"

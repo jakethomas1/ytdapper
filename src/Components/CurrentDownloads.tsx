@@ -15,9 +15,6 @@ export default function CurrentDownloads({ downloads, onCancel }: CurrentDownloa
 
   return (
     <div className="current-downloads">
-      <div className="current-downloads-header">
-        <span>Current Downloads</span>
-      </div>
       <div className="current-downloads-content">
         {isEmpty ? (
           <div className="current-downloads-empty">No current downloads</div>

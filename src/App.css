@@ -102,12 +102,15 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
 }
 
 .url-input {
   flex: 1;
-  height: 42px;
-  padding: 0 16px;
+  min-height: 74px;
+  height: 74px;
+  max-height: 120px;
+  padding: 10px 60px 10px 16px;
   font-size: 15px;
   font-family: inherit;
   color: #1a1a1a;
@@ -116,6 +119,17 @@ body {
   border-radius: 8px;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  resize: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.url-input::-webkit-scrollbar {
+  display: none;
 }
 
 .url-input::placeholder {
@@ -154,6 +168,43 @@ body {
   width: 20px;
   height: 20px;
   color: #2e7d32;
+}
+
+.paste-btn {
+  position: absolute;
+  right: 50px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+}
+
+.paste-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.paste-btn:active {
+  transform: scale(0.95);
+}
+
+.paste-btn img, .clear-btn img {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+.clear-btn {
+  color: #666;
+}
+
+.clear-btn:hover {
+  color: #333;
 }
 
 .qual-arg-wrapper {
