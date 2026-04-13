@@ -247,12 +247,6 @@ body {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  .url-input {
-    color: #1a1a1a;
-  }
-}
-
 .current-downloads {
   margin-left: 0px;
   margin-top: 4px;
