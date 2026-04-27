@@ -6,6 +6,8 @@
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --dwnld-btn-spacing: 54px;
+  /* Total: 54px */
 }
 
 * {
@@ -93,9 +95,11 @@ body {
 
 .download-section {
   display: flex;
+  position: relative;
   flex-direction: column;
   gap: 8px;
-  
+  max-width: 100%;
+  overflow:hidden;
 }
 
 .text-input-wrapper {
@@ -105,40 +109,51 @@ body {
   position: relative;
 }
 
-.url-input {
-  flex: 1;
-  min-height: 74px;
-  height: 74px;
+.input-content-wrapper {
+  display: flex;
+  align-items: center;
+  min-width: 241px;
+  max-width: calc(100% - var(--dwnld-btn-spacing)); /* 54px is = (42px download btn + 12px gap) */
   max-height: 120px;
-  padding: 10px 60px 10px 16px;
+  position: relative;
+  background: #ffffff;
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-content-wrapper:focus-within {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+.content-editable {
+  flex: 1;
+  cursor: text;
+  padding: 12px 18px;
   font-size: 15px;
   font-family: inherit;
   color: #1a1a1a;
-  background: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  background: transparent;
+  border: none;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   resize: none;
-  box-sizing: border-box;
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  max-height: 96px;
+  line-height: 1.5;
 }
 
-.url-input::-webkit-scrollbar {
+.content-editable::-webkit-scrollbar {
   display: none;
 }
 
-.url-input::placeholder {
+.content-editable:empty::before {
+  content: attr(data-placeholder);
   color: #888888;
-}
-
-.url-input:focus {
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+  cursor: inherit;
 }
 
 .download-btn {
@@ -171,18 +186,18 @@ body {
 }
 
 .paste-btn {
-  position: absolute;
-  right: 50px;
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 2px;
   background: transparent;
   transition: background-color 0.2s ease, transform 0.2s ease;
   z-index: 10;
+  margin-left: 4px;
+  margin-right: 4px;
 }
 
 .paste-btn:hover {
@@ -201,6 +216,10 @@ body {
 
 .clear-btn {
   color: #666;
+  position:absolute;
+  top:0px;
+  z-index: 2;
+  min-width: 12px;
 }
 
 .clear-btn:hover {
@@ -210,6 +229,7 @@ body {
 .qual-arg-wrapper {
   display: flex;
   justify-content :space-between;
+  width: 100%;
 }
 
 .quality-select-wrapper {
@@ -217,6 +237,7 @@ body {
   display: inline-flex;
   align-items: center;
   margin-left: auto;
+  margin-right: var(--dwnld-btn-spacing);
 }
 
 .quality-select-arrow {
@@ -328,6 +349,27 @@ body {
 .download-item-error .download-item-filename,
 .download-item-error .download-item-progress {
   color: #ff6b6b;
+}
+
+.download-item-folder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.download-item-folder:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .download-item-cancel {

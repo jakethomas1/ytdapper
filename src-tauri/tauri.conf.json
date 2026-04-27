@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "YTDapper",
         "width": 600,
         "height": 520,

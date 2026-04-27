@@ -15,7 +15,8 @@
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.2",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "usehooks-ts": "^3.1.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

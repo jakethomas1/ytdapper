@@ -1,4 +1,9 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, forwardRef, useImperativeHandle, useMemo } from "react";
+import { useResizeObserver } from 'usehooks-ts';
+
+export interface InputLinkRef {
+  clear: () => void;
+}
 
 interface InputLinkComponentProps {
   url: string;
@@ -23,7 +28,7 @@ const QUALITY_OPTIONS = [
   { value: "4320", label: "8K (4320p)" },
 ];
 
-export default function InputLinkComponent({
+const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
   url,
   quality,
   isAudioOnly,
@@ -32,21 +37,31 @@ export default function InputLinkComponent({
   onQualityChange,
   onAudioOnlyChange,
   onDownload,
-}: InputLinkComponentProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+}, ref) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { width: wrapperWidth = 370 } = useResizeObserver({ ref: wrapperRef as any });
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onUrlChange(e.target.value);
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(Math.max(74, textarea.scrollHeight), 120) + 'px';
+  const clipPath = useMemo(() => {
+    const x1 = 8;
+    const r1 = x1 / 2;
+    return `path('M 0 0 L ${wrapperWidth - x1} 0 L ${wrapperWidth - x1} ${r1} A ${r1} ${r1} 0 0 0 ${wrapperWidth - r1} ${x1} L ${wrapperWidth} ${x1} L ${wrapperWidth} 200 L 0 200 Z')`;
+}, [wrapperWidth]);
+
+  const handleInput = () => {
+    const div = contentRef.current;
+    if (div) {
+      onUrlChange(div.textContent || '');
+      div.style.height = 'auto';
+      div.style.height = Math.min(div.scrollHeight, 96) + 'px';
     }
   };
 
   const handleClear = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = '74px';
+    if (contentRef.current) {
+      contentRef.current.textContent = '';
+      contentRef.current.style.height = 'auto';
     }
     onUrlChange("");
   };
@@ -54,28 +69,39 @@ export default function InputLinkComponent({
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
+      const div = contentRef.current;
+      if (div) {
+        
+        handleInput();
+        div.focus();
+        document.execCommand('insertText', false, text + "\n");
+        
+      }
       onUrlChange((prev) => prev + text + "\n");
-      textareaRef.current?.focus();
     } catch (e) {
       console.error("Failed to read clipboard:", e);
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    clear: handleClear
+  }), [handleClear]);
+
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+    const div = contentRef.current;
+    if (!div) return;
 
     const handlePasteEvent = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData('text/plain') ?? '';
       e.preventDefault();
       document.execCommand('insertText', false, text + '\n');
-      textarea.focus();
+      div.focus();
     };
 
-    textarea.addEventListener('paste', handlePasteEvent);
+    div.addEventListener('paste', handlePasteEvent);
 
     return () => {
-      textarea.removeEventListener('paste', handlePasteEvent);
+      div.removeEventListener('paste', handlePasteEvent);
     };
   }, []);
 
@@ -83,23 +109,55 @@ export default function InputLinkComponent({
     <div className="input-row">
       <span className="row-label">Download:</span>
       <div className="download-section">
+        <span className="clear-btn" onClick={handleClear} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleClear()}>
+          <svg viewBox="0 0 48 48">
+            <defs>
+              <linearGradient id="icon-x-main-gradient" x1="7.534" y1="7.534" x2="27.557" y2="27.557" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#f44f5a"/>
+                <stop offset=".443" stop-color="#ee3d4a"/>
+                <stop offset="1" stop-color="#e52030"/>
+              </linearGradient>
+
+              <linearGradient id="icon-x-shadow-gradient" x1="27.373" y1="27.373" x2="40.507" y2="40.507" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#a8142e"/>
+                <stop offset=".179" stop-color="#ba1632"/>
+                <stop offset=".243" stop-color="#c21734"/>
+              </linearGradient>
+            </defs>
+
+            <path fill="url(#icon-x-main-gradient)" d="M42.42 12.401c.774-.774.774-2.028 0-2.802L38.401 5.58c-.774-.774-2.028-.774-2.802 0L24 17.179 12.401 5.58c-.774-.774-2.028-.774-2.802 0L5.58 9.599c-.774.774-.774 2.028 0 2.802L17.179 24 5.58 35.599c-.774.774-.774 2.028 0 2.802l4.019 4.019c.774.774 2.028.774 2.802 0L42.42 12.401z"/>
+            
+            <path fill="url(#icon-x-shadow-gradient)" d="M24 30.821 35.599 42.42c.774.774 2.028.774 2.802 0l4.019-4.019c.774-.774.774-2.028 0-2.802L30.821 24 24 30.821z"/>
+          </svg>
+        </span> 
         <div className="text-input-wrapper">
-          <textarea
-            ref={textareaRef}
-            className="url-input"
-            placeholder="Paste Video URL here..."
-            value={url}
-            onChange={handleInput}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                onDownload();
-              }
-            }}
-          />
-          <span className={url ? "paste-btn clear-btn" : "paste-btn"} onClick={url ? handleClear : handlePaste} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && (url ? handleClear : handlePaste)()}>
-            <img src={url ? "/icons/clear.svg" : "/icons/clipboard.svg"} alt={url ? "Clear" : "Paste"} />
-          </span>
+          <div
+            ref={wrapperRef}
+            className="input-content-wrapper"
+            style={{ clipPath }}
+          >
+            <div
+              ref={contentRef}
+              className="content-editable"
+              contentEditable
+              data-placeholder="Paste Video URL here..."
+              suppressContentEditableWarning
+              onInput={handleInput}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onDownload();
+                }
+              }}
+            />
+            <div className="flex-col">
+              
+              <span className="paste-btn" onClick={handlePaste} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handlePaste()}>
+                <img src="/icons/clipboard.svg" alt="Paste" />
+              </span>
+              
+            </div>
+          </div>
           <button className="download-btn" onClick={onDownload}>
             <svg
               viewBox="0 0 24 24"
@@ -162,4 +220,6 @@ export default function InputLinkComponent({
       {error && <div className="error-message">{error}</div>}
     </div>
   );
-}
+});
+
+export default InputLinkComponent;

@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
-import { listen, UnlistenFn } from "@tauri-apps/api/event";
+import { emit, listen, UnlistenFn } from "@tauri-apps/api/event";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { load } from "@tauri-apps/plugin-store";
 import DestinationComponent from "./Components/DestinationComponent";
-import InputLinkComponent from "./Components/InputLinkComponent";
+import InputLinkComponent, { type InputLinkRef } from "./Components/InputLinkComponent";
 import CurrentDownloads from "./Components/CurrentDownloads";
+import RightClickMenu from "./Components/RightClickMenu";
 import "./App.css";
 
 interface DownloadItem {
@@ -13,6 +15,7 @@ interface DownloadItem {
   filename: string;
   progress: string;
   status: "downloading" | "complete" | "error" | "cancelled";
+  folderPath: string;
 }
 
 function App() {
@@ -21,10 +24,12 @@ function App() {
   const [url, setUrl] = useState("");
   const [quality, setQuality] = useState("720");
   const [isAudioOnly, setIsAudioOnly] = useState(false);
+  const [alwaysOnTop, setAlwaysOnTop] = useState(false);
   const [error, setError] = useState<string>("");
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
   const unlistenOutputRef = useRef<UnlistenFn | null>(null);
   const unlistenCompleteRef = useRef<UnlistenFn | null>(null);
+  const inputLinkRef = useRef<InputLinkRef>(null);
 
   useEffect(() => {
     async function loadSettings() {
@@ -33,10 +38,12 @@ function App() {
         const savedFolderPath = await store.get<string>("folderPath");
         const savedFolderName = await store.get<string>("folderName");
         const savedQuality = await store.get<string>("quality");
+        const savedAlwaysOnTop = await store.get<boolean>("alwaysOnTop");
 
         if (savedFolderPath) setFolderPath(savedFolderPath);
         if (savedFolderName) setDestination(savedFolderName);
         if (savedQuality) setQuality(savedQuality);
+        if (savedAlwaysOnTop !== undefined) setAlwaysOnTop(savedAlwaysOnTop);
       } catch (e) {
         console.error("Failed to load settings:", e);
       }
@@ -89,6 +96,11 @@ function App() {
       unlistenCompleteRef.current?.();
     };
   }, [isAudioOnly]);
+
+  useEffect(() => {
+    const appWindow = getCurrentWebviewWindow();
+    appWindow.setAlwaysOnTop(alwaysOnTop);
+  }, [alwaysOnTop]);
 
   async function saveSettings(folder: string, folderName: string, qual: string) {
     try {
@@ -165,12 +177,13 @@ function App() {
         filename: "Starting...",
         progress: "0%",
         status: "downloading",
+        folderPath: folderPath,
       };
 
       setDownloads((prev) => [newDownload, ...prev]);
     }
     
-    setUrl("");
+    inputLinkRef.current?.clear();
   }
 
   async function handleCancel(downloadId: string) {
@@ -184,8 +197,22 @@ function App() {
     }
   }
 
+  function handleOpenFolder(download: DownloadItem) {
+    const fullPath = download.folderPath + "\\" + download.filename;
+    invoke("open_in_default_app", { path: fullPath }).catch((e) => {
+      console.error("Failed to open folder:", e);
+    });
+  }
+
   return (
-    <div className="app-container">
+    <div
+      className="app-container"
+      onContextMenu={async (e) => {
+        e.preventDefault();
+        await emit("contextmenu", { x: e.clientX, y: e.clientY });
+      }}
+    >
+      <RightClickMenu alwaysOnTop={alwaysOnTop} setAlwaysOnTop={setAlwaysOnTop} />
       <DestinationComponent
         destination={destination}
         folderPath={folderPath}
@@ -196,7 +223,7 @@ function App() {
         }}
       />
       <InputLinkComponent
-        url={url}
+        ref={inputLinkRef}
         quality={quality}
         isAudioOnly={isAudioOnly}
         error={error}
@@ -213,7 +240,7 @@ function App() {
         }}
         onDownload={handleDownload}
       />
-      <CurrentDownloads downloads={downloads} onCancel={handleCancel} />
+      <CurrentDownloads downloads={downloads} onCancel={handleCancel} onOpenFolder={handleOpenFolder} />
     </div>
   );
 }

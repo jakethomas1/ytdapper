@@ -260,7 +260,19 @@ fn cancel_download(
 
 #[tauri::command]
 fn open_in_default_app(path: String) -> Result<(), String> {
-    open::that(&path).map_err(|e| e.to_string())
+    let path_buf = std::path::PathBuf::from(&path);
+    
+    if path_buf.is_file() {
+        std::process::Command::new("explorer")
+            .arg("/select,")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    } else {
+        open::that(&path).map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
