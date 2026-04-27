@@ -44,9 +44,9 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
   const contentRef = useRef<HTMLDivElement>(null);
 
   const clipPath = useMemo(() => {
-    const x1 = 8;
+    const x1 = 12;
     const r1 = x1 / 2;
-    return `path('M 0 0 L ${wrapperWidth - x1} 0 L ${wrapperWidth - x1} ${r1} A ${r1} ${r1} 0 0 0 ${wrapperWidth - r1} ${x1} L ${wrapperWidth} ${x1} L ${wrapperWidth} 200 L 0 200 Z')`;
+    return `path('M 0 0 L ${wrapperWidth - x1} 0 L ${wrapperWidth - x1} ${r1} A 6 6 0 0 0 ${wrapperWidth - r1} ${x1} L ${wrapperWidth} ${x1} L ${wrapperWidth} 200 L 0 200 Z')`;
 }, [wrapperWidth]);
 
   const handleInput = () => {
@@ -109,54 +109,56 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
     <div className="input-row">
       <span className="row-label">Download:</span>
       <div className="download-section">
-        <span className="clear-btn" onClick={handleClear} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleClear()}>
-          <svg viewBox="0 0 48 48">
-            <defs>
-              <linearGradient id="icon-x-main-gradient" x1="7.534" y1="7.534" x2="27.557" y2="27.557" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#f44f5a"/>
-                <stop offset=".443" stop-color="#ee3d4a"/>
-                <stop offset="1" stop-color="#e52030"/>
-              </linearGradient>
-
-              <linearGradient id="icon-x-shadow-gradient" x1="27.373" y1="27.373" x2="40.507" y2="40.507" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stop-color="#a8142e"/>
-                <stop offset=".179" stop-color="#ba1632"/>
-                <stop offset=".243" stop-color="#c21734"/>
-              </linearGradient>
-            </defs>
-
-            <path fill="url(#icon-x-main-gradient)" d="M42.42 12.401c.774-.774.774-2.028 0-2.802L38.401 5.58c-.774-.774-2.028-.774-2.802 0L24 17.179 12.401 5.58c-.774-.774-2.028-.774-2.802 0L5.58 9.599c-.774.774-.774 2.028 0 2.802L17.179 24 5.58 35.599c-.774.774-.774 2.028 0 2.802l4.019 4.019c.774.774 2.028.774 2.802 0L42.42 12.401z"/>
-            
-            <path fill="url(#icon-x-shadow-gradient)" d="M24 30.821 35.599 42.42c.774.774 2.028.774 2.802 0l4.019-4.019c.774-.774.774-2.028 0-2.802L30.821 24 24 30.821z"/>
-          </svg>
-        </span> 
+        
         <div className="text-input-wrapper">
-          <div
-            ref={wrapperRef}
-            className="input-content-wrapper"
-            style={{ clipPath }}
-          >
+          <div className="the-actual-wrapper">
             <div
-              ref={contentRef}
-              className="content-editable"
-              contentEditable
-              data-placeholder="Paste Video URL here..."
-              suppressContentEditableWarning
-              onInput={handleInput}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  onDownload();
-                }
-              }}
-            />
-            <div className="flex-col">
-              
-              <span className="paste-btn" onClick={handlePaste} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handlePaste()}>
-                <img src="/icons/clipboard.svg" alt="Paste" />
-              </span>
-              
+              ref={wrapperRef}
+              className="input-content-wrapper"
+              style={{ clipPath }}
+            >
+              <div
+                ref={contentRef}
+                className="content-editable"
+                contentEditable
+                data-placeholder="Paste Video URL here..."
+                suppressContentEditableWarning
+                onInput={handleInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onDownload();
+                  }
+                }}
+              />
+              <div className="flex-col">
+                
+                <span className="paste-btn" onClick={handlePaste} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handlePaste()}>
+                  <img src="/icons/clipboard.svg" alt="Paste" />
+                </span>
+              </div>
             </div>
+            <span className="clear-btn" onClick={handleClear} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleClear()}>
+              <svg viewBox="0 0 48 48" width="12" height="12">
+                <defs>
+                  <linearGradient id="icon-x-main-gradient" x1="7.534" y1="7.534" x2="27.557" y2="27.557" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#f44f5a"/>
+                    <stop offset=".443" stop-color="#ee3d4a"/>
+                    <stop offset="1" stop-color="#e52030"/>
+                  </linearGradient>
+
+                  <linearGradient id="icon-x-shadow-gradient" x1="27.373" y1="27.373" x2="40.507" y2="40.507" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#a8142e"/>
+                    <stop offset=".179" stop-color="#ba1632"/>
+                    <stop offset=".243" stop-color="#c21734"/>
+                  </linearGradient>
+                </defs>
+
+                <path fill="url(#icon-x-main-gradient)" d="M42.42 12.401c.774-.774.774-2.028 0-2.802L38.401 5.58c-.774-.774-2.028-.774-2.802 0L24 17.179 12.401 5.58c-.774-.774-2.028-.774-2.802 0L5.58 9.599c-.774.774-.774 2.028 0 2.802L17.179 24 5.58 35.599c-.774.774-.774 2.028 0 2.802l4.019 4.019c.774.774 2.028.774 2.802 0L42.42 12.401z"/>
+                
+                <path fill="url(#icon-x-shadow-gradient)" d="M24 30.821 35.599 42.42c.774.774 2.028.774 2.802 0l4.019-4.019c.774-.774.774-2.028 0-2.802L30.821 24 24 30.821z"/>
+              </svg>
+            </span> 
           </div>
           <button className="download-btn" onClick={onDownload}>
             <svg
