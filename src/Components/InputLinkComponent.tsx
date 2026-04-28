@@ -22,7 +22,7 @@ const QUALITY_OPTIONS = [
   { value: "360", label: "360p" },
   { value: "480", label: "480p" },
   { value: "720", label: "720p (HD)" },
-  { value: "1080", label: "1080p (Full HD)" },
+  { value: "1080", label: "1080p (FHD)" },
   { value: "1440", label: "1440p (2K)" },
   { value: "2160", label: "4K (2160p)" },
   { value: "4320", label: "8K (4320p)" },
@@ -106,7 +106,7 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
   }, []);
 
   return (
-    <div className="input-row">
+    <div className="input-link-component">
       <span className="row-label">Download:</span>
       <div className="download-section">
         
@@ -176,15 +176,15 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
           </button>
         </div>
         <div className="qual-arg-wrapper">
-        <label>
+        <label id="audio-only-label">
           <input 
             type="checkbox" 
-            id="audio-only-select" 
-            className="audio-only"
+            
+            className="audio-only-input"
             checked={isAudioOnly}
             onChange={(e) => onAudioOnlyChange(e.target.checked)}
           />
-          Audio-only
+          <span className="audio-only-text">Audio-only</span>
         </label>
         {!isAudioOnly && (
         <div className="quality-select-wrapper">

@@ -137,14 +137,24 @@ function App() {
       result.progress = progressMatch[1] + "%";
     }
 
-    const filenameMatch = line.match(/\[download\]\s*Destination:\s*(.+)/);
-    const fullPath = filenameMatch?.[1] ?? ""
-    let fileName = fullPath.split(/[\\/]/).pop() ?? ""
-    if (audioOnly && fileName) {
-      fileName = fileName.replace(/\.[^.]+$/, ".mp3"); 
+    const extractFilename = (rawPath: string): string => {
+      let fileName = rawPath.split(/[\\/]/).pop() ?? "";
+      if (audioOnly && fileName) {
+        fileName = fileName.replace(/\.[^.]+$/, ".mp3");
+      }
+      return fileName;
+    };
+
+    const destinationMatch = line.match(/\[download\]\s*Destination:\s*(.+)/);
+    if (destinationMatch) {
+      result.filename = extractFilename(destinationMatch[1]);
+      return result;
     }
-    if (filenameMatch) {
-      result.filename = fileName;
+
+    const alreadyDownloadedMatch = line.match(/\[download\]\s*(.+?)\s+has already been downloaded/);
+    if (alreadyDownloadedMatch) {
+      result.filename = extractFilename(alreadyDownloadedMatch[1]);
+      result.progress = "100%";
     }
 
     return result;
