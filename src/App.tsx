@@ -161,7 +161,8 @@ function App() {
   }
 
   async function handleDownload() {
-    const urls = url.split('\n').filter(u => u.trim());
+    const rawText = inputLinkRef.current?.getText() ?? url;
+    const urls = rawText.split('\n').filter(u => u.trim());
 
     if (urls.length === 0) {
       setError("Please enter a URL");

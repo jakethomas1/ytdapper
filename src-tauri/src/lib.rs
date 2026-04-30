@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::SystemTime;
+
+static DOWNLOAD_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::Emitter;
@@ -138,18 +140,14 @@ async fn download_video(
         "yt-dlp not found. See README.md or run setup.bat (Windows) / setup.sh (Linux) to download it.".to_string()
     })?;
 
-    let timestamp = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .map(|d| d.as_millis())
-        .unwrap_or(0);
-    let log_path = std::env::temp_dir().join(format!("ytdapper_{}.log", timestamp));
+    let id = DOWNLOAD_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let download_id = format!("download_{}", id);
+    let log_path = std::env::temp_dir().join(format!("ytdapper_{}.log", id));
 
     let output_template = format!("{}/%(title)s.%(ext)s", output_dir);
 
     let mut cmd = create_command(&yt_dlp_path, &url, &quality, &output_template, is_audio_only);
     let mut child = cmd.spawn().map_err(|e| e.to_string())?;
-
-    let download_id = format!("download_{}", timestamp);
     let pid = child.id().ok_or("Failed to get process ID")?;
 
     let stdout = child.stdout.take().ok_or("stdout not captured")?;

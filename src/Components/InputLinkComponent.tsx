@@ -3,6 +3,7 @@ import { useResizeObserver } from 'usehooks-ts';
 
 export interface InputLinkRef {
   clear: () => void;
+  getText: () => string;
 }
 
 interface InputLinkComponentProps {
@@ -52,7 +53,7 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
   const handleInput = () => {
     const div = contentRef.current;
     if (div) {
-      onUrlChange(div.textContent || '');
+      onUrlChange(div.innerText  || '');
       div.style.height = 'auto';
       div.style.height = Math.min(div.scrollHeight, 96) + 'px';
     }
@@ -60,7 +61,7 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
 
   const handleClear = () => {
     if (contentRef.current) {
-      contentRef.current.textContent = '';
+      contentRef.current.innerText = '';
       contentRef.current.style.height = 'auto';
     }
     onUrlChange("");
@@ -71,20 +72,22 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
       const text = await navigator.clipboard.readText();
       const div = contentRef.current;
       if (div) {
-        
-        handleInput();
         div.focus();
+        const sel = window.getSelection();
+        sel?.selectAllChildren(div);
+        sel?.collapseToEnd(); // Move cursor to end before pasting
+
         document.execCommand('insertText', false, text + "\n");
-        
+        onUrlChange(div.innerText  || '');
       }
-      onUrlChange((prev) => prev + text + "\n");
     } catch (e) {
       console.error("Failed to read clipboard:", e);
     }
   };
 
   useImperativeHandle(ref, () => ({
-    clear: handleClear
+    clear: handleClear, 
+    getText: () => contentRef.current?.innerText || '',
   }), [handleClear]);
 
   useEffect(() => {
