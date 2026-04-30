@@ -162,7 +162,7 @@ function App() {
 
   async function handleDownload() {
     const urls = url.split('\n').filter(u => u.trim());
-    
+
     if (urls.length === 0) {
       setError("Please enter a URL");
       return;
@@ -171,28 +171,30 @@ function App() {
       setError("Please select a destination folder");
       return;
     }
-
     setError("");
 
-    for (const urlStr of urls) {
-      const downloadId = await invoke<string>("download_video", {
-        url: urlStr.trim(),
-        quality: quality,
-        outputDir: folderPath,
-        isAudioOnly: isAudioOnly,
-      });
+    // Fire all downloads concurrently instead of awaiting each sequentially
+    const newDownloads = await Promise.all(
+      urls.map(async (urlStr) => {
+        const downloadId = await invoke<string>("download_video", {
+          url: urlStr.trim(),
+          quality: quality,
+          outputDir: folderPath,
+          isAudioOnly: isAudioOnly,
+        });
+        return {
+          id: downloadId,
+          filename: "Starting...",
+          progress: "0%",
+          status: "downloading" as const,
+          folderPath: folderPath,
+        };
+      })
+    );
 
-      const newDownload: DownloadItem = {
-        id: downloadId,
-        filename: "Starting...",
-        progress: "0%",
-        status: "downloading",
-        folderPath: folderPath,
-      };
+    // Add all new downloads to state in one atomic update
+    setDownloads((prev) => [...newDownloads, ...prev]);
 
-      setDownloads((prev) => [newDownload, ...prev]);
-    }
-    
     inputLinkRef.current?.clear();
   }
 
@@ -236,6 +238,7 @@ function App() {
         ref={inputLinkRef}
         quality={quality}
         isAudioOnly={isAudioOnly}
+        url={url}
         error={error}
         onUrlChange={setUrl}
         onQualityChange={(newQuality) => {

@@ -95,7 +95,7 @@ fn create_command(yt_dlp_path: &PathBuf, url: &str, quality: &str, output_templa
     cmd.env("PYTHONUNBUFFERED", "1");
 
     #[cfg(windows)]
-    cmd.creation_flags(0x00000200);
+    cmd.creation_flags(0x08000200);
 
     if is_audio_only {
         cmd.args([

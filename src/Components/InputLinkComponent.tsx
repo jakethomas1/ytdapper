@@ -6,7 +6,7 @@ export interface InputLinkRef {
 }
 
 interface InputLinkComponentProps {
-  url: string;
+  url?: string;
   quality: string;
   isAudioOnly: boolean;
   error: string;
@@ -29,7 +29,7 @@ const QUALITY_OPTIONS = [
 ];
 
 const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
-  url,
+  /*url,*/
   quality,
   isAudioOnly,
   error,
