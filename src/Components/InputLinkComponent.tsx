@@ -54,15 +54,12 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
     const div = contentRef.current;
     if (div) {
       onUrlChange(div.innerText  || '');
-      div.style.height = 'auto';
-      div.style.height = Math.min(div.scrollHeight, 96) + 'px';
     }
   };
 
   const handleClear = () => {
     if (contentRef.current) {
       contentRef.current.innerText = '';
-      contentRef.current.style.height = 'auto';
     }
     onUrlChange("");
   };
@@ -125,6 +122,11 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
                 className="content-editable"
                 contentEditable
                 data-placeholder="Paste Video URL here..."
+                onBlur={(e) => {
+                  if (!e.currentTarget.textContent?.trim()) {
+                    e.currentTarget.innerHTML = '';
+                  }
+                }}
                 suppressContentEditableWarning
                 onInput={handleInput}
                 onKeyDown={(e) => {

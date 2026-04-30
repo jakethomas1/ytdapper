@@ -139,6 +139,8 @@ body {
 }
 
 .content-editable {
+  display: grid; /* Vertically center the caret (seen when type then backspace)*/
+  align-items: center; 
   flex: 1;
   cursor: text;
   padding: 12px 18px;
