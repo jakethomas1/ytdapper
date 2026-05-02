@@ -320,6 +320,7 @@ pub fn run() {
                     "resume" => println!("resume event"),
                     "clear_completed" => println!("clear completed event"),
                     "clear_all" => println!("clear all event"),
+                    "toggle_always_on_top" => {},
                     _ => println!("unexpected menu event"),
                 }
             });

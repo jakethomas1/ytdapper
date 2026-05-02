@@ -16,7 +16,12 @@ export default function CurrentDownloads({ downloads, onCancel, onOpenFolder }: 
   const isEmpty = downloads.length === 0;
 
   return (
+    <div className="current-downloads-component">
+      <div className="clear-dl-container">
+        <div className="clear-dl-btn">Clear</div>
+      </div>
     <div className="current-downloads">
+      
       <div className="current-downloads-content">
         {isEmpty ? (
           <div className="current-downloads-empty">No current downloads</div>
@@ -41,6 +46,7 @@ export default function CurrentDownloads({ downloads, onCancel, onOpenFolder }: 
           ))
         )}
       </div>
+    </div>
     </div>
   );
 }

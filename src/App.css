@@ -138,6 +138,30 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
 }
 
+.clear-dl-container {
+  position:absolute;
+  font-family: 'SourceCodePro', monospace;
+  font-size: 12px;
+  color: rgba(255,255,255,.25);
+  top: 0px;
+  right: 12px;
+  border: 1px solid transparent;
+  padding: 2px 20px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  z-index: 20;
+}
+
+.clear-dl-container:hover {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255, 255, 255, 0.33);
+  color: rgba(255,255,255, .5);
+}
+
+.current-downloads-component {
+  position: relative;
+}
+
 .content-editable {
   display: grid; /* Vertically center the caret (seen when type then backspace)*/
   align-items: center; 
@@ -334,6 +358,7 @@ body {
 }
 
 .current-downloads {
+  position: relative;
   margin-left: 0px;
   margin-top: 4px;
   background: rgba(0, 0, 0, 0.3);
