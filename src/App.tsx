@@ -14,8 +14,11 @@ interface DownloadItem {
   id: string;
   filename: string;
   progress: string;
-  status: "downloading" | "complete" | "error" | "cancelled";
+  status: "downloading" | "complete" | "error" | "cancelled" | "paused";
   folderPath: string;
+  url: string;
+  quality: string;
+  isAudioOnly: boolean;
 }
 
 function App() {
@@ -27,6 +30,7 @@ function App() {
   const [alwaysOnTop, setAlwaysOnTop] = useState(false);
   const [error, setError] = useState<string>("");
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
+  const [hasCompleted, setHasCompleted] = useState(false);
   const unlistenOutputRef = useRef<UnlistenFn | null>(null);
   const unlistenCompleteRef = useRef<UnlistenFn | null>(null);
   const inputLinkRef = useRef<InputLinkRef>(null);
@@ -78,6 +82,7 @@ function App() {
           prev.map((d) => {
             if (d.id === downloadId) {
               if (status === "complete") {
+                setHasCompleted(true);
                 return { ...d, status: "complete", progress: "100%" };
               } else if (status === "error") {
                 setError(message);
@@ -189,6 +194,9 @@ function App() {
           progress: "0%",
           status: "downloading" as const,
           folderPath: folderPath,
+          url: urlStr.trim(),
+          quality: quality,
+          isAudioOnly: isAudioOnly,
         };
       })
     );
@@ -199,14 +207,38 @@ function App() {
     inputLinkRef.current?.clear();
   }
 
-  async function handleCancel(downloadId: string) {
+  async function handlePause(downloadId: string) {
     try {
       await invoke("cancel_download", { downloadId });
       setDownloads((prev) =>
-        prev.map((d) => (d.id === downloadId ? { ...d, status: "cancelled" } : d))
+        prev.map((d) => (d.id === downloadId ? { ...d, status: "paused" } : d))
       );
     } catch (e) {
-      console.error("Failed to cancel download:", e);
+      console.error("Failed to pause download:", e);
+    }
+  }
+
+  async function handleResume(downloadId: string) {
+    const download = downloads.find((d) => d.id === downloadId);
+    if (!download) return;
+
+    try {
+      const newDownloadId = await invoke<string>("download_video", {
+        url: download.url,
+        quality: download.quality,
+        outputDir: download.folderPath,
+        isAudioOnly: download.isAudioOnly,
+      });
+
+      setDownloads((prev) =>
+        prev.map((d) =>
+          d.id === downloadId
+            ? { ...d, id: newDownloadId, status: "downloading" as const }
+            : d
+        )
+      );
+    } catch (e) {
+      console.error("Failed to resume download:", e);
     }
   }
 
@@ -215,6 +247,11 @@ function App() {
     invoke("open_in_default_app", { path: fullPath }).catch((e) => {
       console.error("Failed to open folder:", e);
     });
+  }
+
+  function handleClearCompleted() {
+    setDownloads((prev) => prev.filter((d) => d.status !== "complete"));
+    setHasCompleted(false);
   }
 
   return (
@@ -254,7 +291,7 @@ function App() {
         }}
         onDownload={handleDownload}
       />
-      <CurrentDownloads downloads={downloads} onCancel={handleCancel} onOpenFolder={handleOpenFolder} />
+      <CurrentDownloads downloads={downloads} onPause={handlePause} onResume={handleResume} onOpenFolder={handleOpenFolder} hasCompleted={hasCompleted} onClearCompleted={handleClearCompleted} />
     </div>
   );
 }

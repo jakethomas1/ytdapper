@@ -2,23 +2,29 @@ interface DownloadItem {
   id: string;
   filename: string;
   progress: string;
-  status: "downloading" | "complete" | "error" | "cancelled";
+  status: "downloading" | "complete" | "error" | "cancelled" | "paused";
   folderPath: string;
+  url: string;
+  quality: string;
+  isAudioOnly: boolean;
 }
 
 interface CurrentDownloadsProps {
   downloads: DownloadItem[];
-  onCancel: (id: string) => void;
+  onPause: (id: string) => void;
+  onResume: (id: string) => void;
   onOpenFolder: (download: DownloadItem) => void;
+  hasCompleted: boolean;
+  onClearCompleted: () => void;
 }
 
-export default function CurrentDownloads({ downloads, onCancel, onOpenFolder }: CurrentDownloadsProps) {
+export default function CurrentDownloads({ downloads, onPause, onResume, onOpenFolder, hasCompleted, onClearCompleted }: CurrentDownloadsProps) {
   const isEmpty = downloads.length === 0;
 
   return (
     <div className="current-downloads-component">
-      <div className="clear-dl-container">
-        <div className="clear-dl-btn">Clear</div>
+      <div className={`clear-dl-container ${hasCompleted ? "" : "hidden"}`}>
+        <div className="clear-dl-btn" onClick={onClearCompleted}>Clear</div>
       </div>
     <div className="current-downloads">
       
@@ -40,7 +46,10 @@ export default function CurrentDownloads({ downloads, onCancel, onOpenFolder }: 
               </button>
               <span className="download-item-progress">{download.progress}</span>
               {download.status === "downloading" && (
-                <button className="download-item-cancel" onClick={() => onCancel(download.id)}>Cancel</button>
+                <button className="download-item-pause" onClick={() => onPause(download.id)}>Pause</button>
+              )}
+              {download.status === "paused" && (
+                <button className="download-item-resume" onClick={() => onResume(download.id)}>Resume</button>
               )}
             </div>
           ))

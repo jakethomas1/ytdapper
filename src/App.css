@@ -124,7 +124,6 @@ body {
 .input-content-wrapper {
   display: flex;
   align-items: center;
-  min-width: 284px;
    /*54px is = (42px download btn + 12px gap) */
   max-height: 120px;
   position: relative;
@@ -146,16 +145,27 @@ body {
   top: 0px;
   right: 12px;
   border: 1px solid transparent;
-  padding: 2px 20px;
+  padding: 1px 16px;
   line-height: 1;
   transition: all 0.2s ease;
   z-index: 20;
+  cursor: pointer;
+}
+
+.clear-dl-container.hidden {
+  display: none;
 }
 
 .clear-dl-container:hover {
   background: rgba(255,255,255,.1);
   border: 1px solid rgba(255, 255, 255, 0.33);
   color: rgba(255,255,255, .5);
+}
+
+.clear-dl-container:active {
+  background: rgba(255,255,255,.33);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: rgba(255,255,255, .75);
 }
 
 .current-downloads-component {
@@ -185,8 +195,9 @@ body {
 }
 
 .the-actual-wrapper {
-  max-width: calc(100% - var(--dwnld-btn-spacing));
-  min-width: 241px;
+  min-width: 284px;
+  max-width: 284px;
+  /*max-width: calc(100% - var(--dwnld-btn-spacing));*/
   position: relative;
   padding-top: 12px;
 
