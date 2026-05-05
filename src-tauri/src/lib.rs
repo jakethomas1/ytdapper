@@ -104,6 +104,8 @@ fn create_command(yt_dlp_path: &PathBuf, url: &str, quality: &str, output_templa
             "--progress",
             "--newline",
             "--no-colors",
+            "--replace-in-metadata", "title", "[—–]", "-",  // em/en dash → hyphen
+            "--replace-in-metadata", "title", "[?#%&]", "_", // url-special chars,
             "-f", "bestaudio/best",
             "-x",
             "--audio-format", "mp3",
@@ -116,6 +118,8 @@ fn create_command(yt_dlp_path: &PathBuf, url: &str, quality: &str, output_templa
             "--progress",
             "--newline",
             "--no-colors",
+            "--replace-in-metadata", "title", "[\\u2014\\u2013]", "-",  // em/en dash → hyphen [—–]
+            "--replace-in-metadata", "title", "[?#%&]", "_", // url-special chars,
             "-f", &format!("best[height<={}]", quality),
             "-o", output_template,
             url,
@@ -144,7 +148,11 @@ async fn download_video(
     let download_id = format!("download_{}", id);
     let log_path = std::env::temp_dir().join(format!("ytdapper_{}.log", id));
 
-    let output_template = format!("{}/%(title)s.%(ext)s", output_dir);
+    let output_template = if is_audio_only {
+        format!("{}/%(title)s.%(ext)s", output_dir)
+    } else {
+        format!("{}/%(title)s [{}p].%(ext)s", output_dir, quality)
+    };
 
     let mut cmd = create_command(&yt_dlp_path, &url, &quality, &output_template, is_audio_only);
     let mut child = cmd.spawn().map_err(|e| e.to_string())?;
