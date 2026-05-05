@@ -95,12 +95,14 @@ fn send_sigint(pid: u32) -> Result<(), String> {
 fn create_command(yt_dlp_path: &PathBuf, url: &str, quality: &str, output_template: &str, is_audio_only: bool) -> Command {
     let mut cmd = Command::new(yt_dlp_path);
     cmd.env("PYTHONUNBUFFERED", "1");
+    cmd.env("PYTHONIOENCODING", "utf-8");
 
     #[cfg(windows)]
     cmd.creation_flags(0x08000200);
 
     if is_audio_only {
         cmd.args([
+            "--encoding", "utf-8",
             "--progress",
             "--newline",
             "--no-colors",
@@ -115,14 +117,15 @@ fn create_command(yt_dlp_path: &PathBuf, url: &str, quality: &str, output_templa
         ]);
     } else {
         cmd.args([
+            "--encoding", "utf-8",
             "--progress",
             "--newline",
             "--no-colors",
             "--replace-in-metadata", "title", "[\\u2014\\u2013]", "-",  // em/en dash → hyphen [—–]
             "--replace-in-metadata", "title", "[?#%&]", "_", // url-special chars,
-            "-f", &format!("best[height<={}]", quality),
-            "-o", output_template,
-            url,
+            "-f", &format!("bestvideo[height<={}]+bestaudio/best", quality), //When you used best[height<={}], yt-dlp was falling back to a pre-muxed format and naming the intermediate 
+            "-o", output_template,                                           //files with the format ID. With bestvideo+bestaudio, yt-dlp knows upfront it's doing a merge, so it
+            url,                                                             //names the destination after the final output file from the start rather than the intermediate stream file.
         ]);
     }
 

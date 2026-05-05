@@ -143,13 +143,39 @@ body {
   font-size: 12px;
   color: rgba(255,255,255,.25);
   bottom: 0px;
-  right: 12px;
+  right: 0px;
+  border-bottom-right-radius: 8px;
   border: 1px solid transparent;
-  padding: 1px 16px;
+  padding: 1px 16px 1px 16px;
   line-height: 1;
   transition: all 0.2s ease;
   z-index: 20;
   cursor: pointer;
+}
+
+.download-item-btn {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  transition: background-color 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.download-item-btn-wrapper {
+  width: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.download-item-resume {
+  background-color: #7cb46b;
+}
+
+.download-item-pause {
+  background-color: rgb(206, 125, 125);
 }
 
 .clear-dl-container.hidden {
@@ -427,7 +453,7 @@ body {
 .download-item:hover {
   background: rgba(255, 255, 255, 0.1);
 }
-.download-item:focus-within {
+.download-item:focus {
   background: rgba(255, 255, 255, 0.25);
 }
 
