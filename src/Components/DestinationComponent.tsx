@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { downloadDir } from "@tauri-apps/api/path";
+import ErrorIcon from "./ErrorIconComponent";
 
 interface DestinationComponentProps {
   destination: string;
   folderPath: string;
+  error?: string;
+  onErrorClear?: () => void;
   onPickFolder: () => void;
   onFolderChange: (path: string, name: string) => void;
 }
@@ -11,6 +14,8 @@ interface DestinationComponentProps {
 export default function DestinationComponent({
   destination,
   folderPath,
+  error,
+  onErrorClear,
   onPickFolder,
   onFolderChange,
 }: DestinationComponentProps) {
@@ -42,6 +47,7 @@ export default function DestinationComponent({
       </div>
       <div className="separator"></div>
       <span className="folder-path">{folderPath || "No folder selected"}</span>
+      <ErrorIcon error={error} onClick={onErrorClear} />
     </div>
   );
 }

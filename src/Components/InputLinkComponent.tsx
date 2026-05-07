@@ -1,5 +1,6 @@
-import { useRef, useEffect, forwardRef, useImperativeHandle, useMemo } from "react";
+import { useRef, useEffect, forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { useResizeObserver } from 'usehooks-ts';
+import ErrorIcon from "./ErrorIconComponent";
 
 export interface InputLinkRef {
   clear: () => void;
@@ -10,7 +11,6 @@ interface InputLinkComponentProps {
   url?: string;
   quality: string;
   isAudioOnly: boolean;
-  error: string;
   onUrlChange: (url: string | ((prev: string) => string)) => void;
   onQualityChange: (quality: string) => void;
   onAudioOnlyChange: (value: boolean) => void;
@@ -33,12 +33,12 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
   /*url,*/
   quality,
   isAudioOnly,
-  error,
   onUrlChange,
   onQualityChange,
   onAudioOnlyChange,
   onDownload,
 }, ref) => {
+  const [localError, setLocalError] = useState<string>("");
   const wrapperRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { width: wrapperWidth = 370 } = useResizeObserver({ ref: wrapperRef as any });
@@ -54,7 +54,26 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
     const div = contentRef.current;
     if (div) {
       onUrlChange(div.innerText  || '');
+      setLocalError("");
     }
+  };
+
+  const handleDownloadClick = () => {
+    const currentUrl = contentRef.current?.innerText?.trim() || '';
+    
+    if (!currentUrl) {
+      setLocalError("Please enter a URL");
+      return;
+    }
+    
+    const parts = currentUrl.split('.');
+    if (parts.length < 2 || parts[0].length < 1) {
+      setLocalError("Invalid URL format");
+      return;
+    }
+    
+    setLocalError("");
+    onDownload();
   };
 
   const handleClear = () => {
@@ -62,6 +81,7 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
       contentRef.current.innerText = '';
     }
     onUrlChange("");
+    setLocalError("");
   };
 
   const handlePaste = async () => {
@@ -132,7 +152,7 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    onDownload();
+                    handleDownloadClick();
                   }
                 }}
               />
@@ -165,7 +185,7 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
               </svg>
             </span> 
           </div>
-          <button className="download-btn" onClick={onDownload}>
+          <button className="download-btn" onClick={handleDownloadClick}>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -224,7 +244,7 @@ const InputLinkComponent = forwardRef<InputLinkRef, InputLinkComponentProps>(({
         )}
         </div>
       </div>
-      {error && <div className="error-message">{error}</div>}
+      {localError && <ErrorIcon error={localError} onClick={() => setLocalError("")} />}
     </div>
   );
 });

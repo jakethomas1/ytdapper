@@ -448,6 +448,8 @@ body {
   font-size: 13px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .download-item:hover {
@@ -531,5 +533,44 @@ body {
 .download-item-cancelled .download-item-filename,
 .download-item-cancelled .download-item-progress {
   color: #ffa726;
+}
+
+.error-icon-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.error-icon {
+  width: 18px;
+  height: 18px;
+  color: #ff6b6b;
+  flex-shrink: 0;
+}
+
+.error-tooltip {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid #ff6b6b;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #ffffff;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.error-icon-container:hover .error-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 

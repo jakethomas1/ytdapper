@@ -28,7 +28,7 @@ function App() {
   const [quality, setQuality] = useState("720");
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [alwaysOnTop, setAlwaysOnTop] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [folderError, setFolderError] = useState<string>("");
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
   const [hasCompleted, setHasCompleted] = useState(false);
   const unlistenOutputRef = useRef<UnlistenFn | null>(null);
@@ -58,10 +58,11 @@ function App() {
       unlistenOutputRef.current = await listen<[string, string]>("yt-dlp-output", (event) => {
         const [downloadId, line] = event.payload;
         console.log("yt-dlp-output event:", downloadId, line);
-        const parsed = parseDownloadOutput(line, isAudioOnly);
 
-        setDownloads((prev) =>
-          prev.map((d) => {
+        setDownloads((prev) => {
+          const parsed = parseDownloadOutput(line);
+
+          return prev.map((d) => {
             if (d.id === downloadId) {
               return {
                 ...d,
@@ -70,8 +71,8 @@ function App() {
               };
             }
             return d;
-          })
-        );
+          });
+        });
       });
 
       unlistenCompleteRef.current = await listen<[string, string, string]>("yt-dlp-complete", (event) => {
@@ -83,9 +84,15 @@ function App() {
             if (d.id === downloadId) {
               if (status === "complete") {
                 setHasCompleted(true);
-                return { ...d, status: "complete", progress: "100%" };
+                return { 
+                  ...d, 
+                  status: "complete", 
+                  progress: "100%",
+                  filename: !d.isAudioOnly 
+                    ? d.filename.replace(/\.f\d+(?=\.[^.]+$)|\.part$/g, "")
+                    : d.filename.replace(/\.f\d+(?=\.[^.]+$)|\.part$/g, "").replace(/\.[^.]+$/, ".mp3"),// remove .f123 and .part from filename
+                };
               } else if (status === "error") {
-                setError(message);
                 return { ...d, status: "error" };
               }
             }
@@ -100,7 +107,7 @@ function App() {
       unlistenOutputRef.current?.();
       unlistenCompleteRef.current?.();
     };
-  }, [isAudioOnly]);
+  }, []);
 
   useEffect(() => {
     const appWindow = getCurrentWebviewWindow();
@@ -134,7 +141,7 @@ function App() {
     }
   }
 
-  function parseDownloadOutput(line: string, audioOnly: boolean): { filename?: string; progress?: string } {
+  function parseDownloadOutput(line: string): { filename?: string; progress?: string } {
     const result: { filename?: string; progress?: string } = {};
 
     const progressMatch = line.match(/(\d+(?:\.\d+)?)%/);
@@ -144,10 +151,7 @@ function App() {
 
     const extractFilename = (rawPath: string): string => {
       let fileName = rawPath.split(/[\\/]/).pop() ?? "";
-      if (audioOnly && fileName) {
-        fileName = fileName.replace(/\.[^.]+$/, ".mp3");
-      }
-      return fileName;
+      return fileName + ".part";
     };
 
     const destinationMatch = line.match(/\[download\]\s*Destination:\s*(.+)/);
@@ -170,14 +174,13 @@ function App() {
     const urls = rawText.split('\n').filter(u => u.trim());
 
     if (urls.length === 0) {
-      setError("Please enter a URL");
       return;
     }
     if (!folderPath) {
-      setError("Please select a destination folder");
+      setFolderError("Please select a destination folder");
       return;
     }
-    setError("");
+    setFolderError("");
 
     // Fire all downloads concurrently instead of awaiting each sequentially
     const newDownloads = await Promise.all(
@@ -243,7 +246,7 @@ function App() {
   }
 
   function handleOpenFolder(download: DownloadItem) {
-    const fullPath = download.folderPath + "\\" + download.filename;
+    const fullPath = `${download.folderPath}${download.folderPath.includes('\\') ? '\\' : '/'}${download.filename}`;
     invoke("open_in_default_app", { path: fullPath }).catch((e) => {
       console.error("Failed to open folder:", e);
     });
@@ -266,6 +269,8 @@ function App() {
       <DestinationComponent
         destination={destination}
         folderPath={folderPath}
+        error={folderError}
+        onErrorClear={() => setFolderError("")}
         onPickFolder={pickFolder}
         onFolderChange={(path, name) => {
           setFolderPath(path);
@@ -277,7 +282,6 @@ function App() {
         quality={quality}
         isAudioOnly={isAudioOnly}
         url={url}
-        error={error}
         onUrlChange={setUrl}
         onQualityChange={(newQuality) => {
           setQuality(newQuality);

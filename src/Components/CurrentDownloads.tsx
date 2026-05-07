@@ -33,8 +33,8 @@ export default function CurrentDownloads({ downloads, onPause, onResume, onOpenF
           <div className="current-downloads-empty">No current downloads</div>
         ) : (
           downloads.map((download) => (
-            <div key={download.id} className={`download-item download-item-${download.status}`}>
-              <span className="download-item-filename" title={download.filename}>{download.filename}</span>
+            <div tabIndex={0} key={download.id} className={`download-item download-item-${download.status}`} onDoubleClick={() => onOpenFolder(download)}>
+              <span className="download-item-filename" title={`${download.folderPath}${download.folderPath.includes('\\') ? '\\' : '/'}${download.filename}`}>{download.filename}</span>
               <button
                 className="download-item-folder"
                 onClick={() => onOpenFolder(download)}
