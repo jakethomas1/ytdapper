@@ -111,7 +111,7 @@ body {
   flex-direction: column;
   gap: 8px;
   max-width: 100%;
-  overflow:hidden;
+  overflow: visible;
 }
 
 .text-input-wrapper {
@@ -158,20 +158,20 @@ body {
   cursor: pointer;
   display: flex;
   transition: background-color 0.2s ease;
-  padding: 4px;
+  padding: 3px;
   border-radius: 4px;
-  margin-left: 4px;
+  
 }
 
 .download-item-btn-wrapper {
-  width: 44px;
+  
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .download-item-resume {
-  background-color: #7cb46b;
+  background-color: #cfffbf;
 }
 
 .download-item-pause {
@@ -399,7 +399,7 @@ body {
   margin-left: 0px;
   margin-top: 4px;
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   margin: auto 0;
 }
@@ -424,8 +424,8 @@ body {
 .current-downloads-content {
   height: 200px;
   overflow-y: auto;
-  padding: 2px 2px;
-  gap: 3px;
+  padding: 0px 0px;
+  gap: 0px;
   display: flex;
   flex-direction: column;
 }
@@ -444,19 +444,23 @@ body {
   display: flex;
   align-items: center;
   padding: 4px 12px;
+  gap: 10px;
   font-family: "Consolas", "Monaco", "Courier New", monospace;
   font-size: 13px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  /*border-radius: 6px;*/
   cursor: pointer;
   user-select: none;
+  /*outline: 1px solid rgba(125, 125, 125, 0.1);*/
+  outline-offset: -1px;
 }
 
 .download-item:hover {
   background: rgba(255, 255, 255, 0.1);
+  outline: none;
 }
 .download-item:focus {
   background: rgba(255, 255, 255, 0.25);
+  outline: none;
 }
 
 .download-item:last-child {
@@ -469,21 +473,27 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-right: 8px;
+ 
 }
 
 .download-item-separator {
-  color: rgba(255, 255, 255, 0.4);
-  margin: 0 12px;
+  border-color: rgba(25, 25, 25, 0.1);
+  /*background-color: rgb(255, 255, 255, .1);*/
+  margin: -3px 0px;
+  height: stretch;
 }
 
 .download-item-progress {
   color: rgba(255, 255, 255, 0.9);
-  min-width: 50px;
+  min-width: 40px;
   text-align: right;
 }
 
 .download-item-complete .download-item-progress {
+  color: #6d9e6f;
+} /*#6d9e6f;*/
+
+.download-item-open {
   color: #6d9e6f;
 }
 
