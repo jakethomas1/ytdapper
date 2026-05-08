@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { downloadDir } from "@tauri-apps/api/path";
 import ErrorIcon from "./ErrorIconComponent";
 
@@ -46,7 +47,7 @@ export default function DestinationComponent({
         <div className="triangle"></div>
       </div>
       <div className="separator"></div>
-      <span className="folder-path">{folderPath || "No folder selected"}</span>
+      <span className="folder-path" onClick={() => invoke("open_in_default_app", { path: folderPath }).catch(console.error)}>{folderPath || "No folder selected"}</span>
       <ErrorIcon error={error} onClick={onErrorClear} />
     </div>
   );

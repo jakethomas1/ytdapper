@@ -1,8 +1,4 @@
 import { startDrag } from "@crabnebula/tauri-plugin-drag";
-import dragIcon from "../../src-tauri/icons/32x32.png?inline";
-
-console.log("dragIcon type:", typeof dragIcon);
-console.log("dragIcon preview:", dragIcon?.substring(0, 50));
 
 interface DownloadItem {
   id: string;
@@ -43,32 +39,36 @@ export default function CurrentDownloads({ downloads, onPause, onResume, onOpenF
 
     const startX = e.clientX;
     const startY = e.clientY;
-    let hasMoved = false;
+    let dragStarted = false;
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
+    const onMouseMove = async (moveEvent: MouseEvent) => {
+      if (dragStarted) return;
+
       const dx = Math.abs(moveEvent.clientX - startX);
       const dy = Math.abs(moveEvent.clientY - startY);
+
       if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
-        hasMoved = true;
+        dragStarted = true; // prevent firing twice
+        cleanup();
+
+        const filePath = getFilePath(download);
+        try {
+          await startDrag({
+            item: [filePath],
+            icon: "../../src-tauri/icons/32x32.png",
+            mode: "move",
+          });
+        } catch (err) {
+          console.error("Drag failed:", err);
+        }
       }
     };
 
-    const onMouseUp = async () => {
+    const onMouseUp = () => cleanup();
+
+    const cleanup = () => {
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
-
-      if (!hasMoved) return;
-
-      const filePath = getFilePath(download);
-      try {
-        await startDrag({
-          item: [filePath],
-          icon: `data:image/png;base64,${dragIcon}`,
-          mode: "move",
-        });
-      } catch (err) {
-        console.error("Drag failed:", err);
-      }
     };
 
     document.addEventListener("mousemove", onMouseMove);
