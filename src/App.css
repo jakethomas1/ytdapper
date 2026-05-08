@@ -545,6 +545,12 @@ body {
   color: #ffa726;
 }
 
+
+.download-item-draggable:active {
+  cursor: grabbing;
+  opacity: 0.65;
+}
+
 .error-icon-container {
   position: relative;
   display: inline-flex;

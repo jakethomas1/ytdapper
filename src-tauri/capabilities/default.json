@@ -7,6 +7,8 @@
     "core:default",
     "opener:default",
     "dialog:default",
-    "core:window:allow-set-always-on-top"    
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-start-dragging",
+    "drag:default"    
   ]
 }
