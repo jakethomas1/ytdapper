@@ -18,6 +18,7 @@ interface CurrentDownloadsProps {
   onOpenFolder: (download: DownloadItem) => void;
   hasCompleted: boolean;
   onClearCompleted: () => void;
+  onFolderMoved: (id: string, newFolderPath: string) => void;
 }
 
 function getFilePath(download: DownloadItem): string {
@@ -30,7 +31,7 @@ const DRAGGABLE_STATUSES = new Set(["complete"]);
 
 const DRAG_THRESHOLD = 5;
 
-export default function CurrentDownloads({ downloads, onPause, onResume, onOpenFolder, hasCompleted, onClearCompleted }: CurrentDownloadsProps) {
+export default function CurrentDownloads({ downloads, onPause, onResume, onOpenFolder, hasCompleted, onClearCompleted, onFolderMoved }: CurrentDownloadsProps) {
   const isEmpty = downloads.length === 0;
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, download: DownloadItem) => {
@@ -53,11 +54,15 @@ export default function CurrentDownloads({ downloads, onPause, onResume, onOpenF
 
         const filePath = getFilePath(download);
         try {
-          await startDrag({
+          const result = await startDrag({
             item: [filePath],
             icon: "../../src-tauri/icons/32x32.png",
             mode: "move",
           });
+
+          if (result?.dropLocation) {
+            onFolderMoved(download.id, result.dropLocation);
+          }
         } catch (err) {
           console.error("Drag failed:", err);
         }

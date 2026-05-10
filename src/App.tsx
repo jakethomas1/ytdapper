@@ -252,6 +252,12 @@ function App() {
     });
   }
 
+  function handleFolderMoved(id: string, newFolderPath: string) {
+  setDownloads((prev) =>
+    prev.map((d) => d.id === id ? { ...d, folderPath: newFolderPath } : d)
+  );
+}
+
   function handleClearCompleted() {
     setDownloads((prev) => prev.filter((d) => d.status !== "complete"));
     setHasCompleted(false);
@@ -295,7 +301,7 @@ function App() {
         }}
         onDownload={handleDownload}
       />
-      <CurrentDownloads downloads={downloads} onPause={handlePause} onResume={handleResume} onOpenFolder={handleOpenFolder} hasCompleted={hasCompleted} onClearCompleted={handleClearCompleted} />
+      <CurrentDownloads downloads={downloads} onPause={handlePause} onResume={handleResume} onOpenFolder={handleOpenFolder} hasCompleted={hasCompleted} onClearCompleted={handleClearCompleted} onFolderMoved={handleFolderMoved} />
     </div>
   );
 }
