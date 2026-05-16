@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+session-ses_*.md
+*.swp
+*.swo
