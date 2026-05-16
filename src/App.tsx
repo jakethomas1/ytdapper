@@ -88,9 +88,14 @@ function App() {
                   ...d, 
                   status: "complete", 
                   progress: "100%",
-                  filename: !d.isAudioOnly 
-                    ? d.filename.replace(/\.f\d+(?=\.[^.]+$)|\.part$/g, "")
-                    : d.filename.replace(/\.f\d+(?=\.[^.]+$)|\.part$/g, "").replace(/\.[^.]+$/, ".mp3"),// remove .f123 and .part from filename
+                  filename: (() => {
+                    let name = d.filename
+                      .replace(/\.part$/, "")
+                      .replace(/\.f\d+(?=\.[^.]+$)/, "");
+                    return d.isAudioOnly
+                      ? name.replace(/\.[^.]+$/, ".mp3")
+                      : name;
+                  })(),// remove .f123 and .part from filename
                 };
               } else if (status === "error") {
                 return { ...d, status: "error" };
@@ -211,13 +216,16 @@ function App() {
   }
 
   async function handlePause(downloadId: string) {
+    setDownloads((prev) =>
+      prev.map((d) => (d.id === downloadId ? { ...d, status: "paused" } : d))
+    );
     try {
       await invoke("cancel_download", { downloadId });
-      setDownloads((prev) =>
-        prev.map((d) => (d.id === downloadId ? { ...d, status: "paused" } : d))
-      );
     } catch (e) {
       console.error("Failed to pause download:", e);
+      setDownloads((prev) =>
+        prev.map((d) => (d.id === downloadId ? { ...d, status: "downloading" } : d))
+      );
     }
   }
 

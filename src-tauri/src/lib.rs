@@ -263,7 +263,8 @@ fn cancel_download(
 
         Ok(())
     } else {
-        Err("Download not found or already completed".to_string())
+        eprintln!("cancel_download: {} not found or already completed", download_id);
+        Ok(())
     }
 }
 
