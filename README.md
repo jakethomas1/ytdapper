@@ -5,7 +5,13 @@ This app uses `yt-dlp` for video downloading. If you don't have it installed sys
 - **Windows:** Run `setup.bat`
 - **Linux/macOS:** Run `setup.sh`
 
-\
+## Download
+
+| Platform | Installer |
+|----------|-----------|
+| Windows  | [YTDapper_1.0.0_x64-setup.exe](https://github.com/yourusername/ytdapper/releases/latest) (NSIS) |
+| Windows  | [YTDapper_1.0.0_x64.msi](https://github.com/yourusername/ytdapper/releases/latest) (MSI) |
+
 \
 Note: The windows setup script is 1-line 'winget install yt-dlp': 
 
