@@ -1,6 +1,6 @@
-# YTDapper — Video Downloader Interface
+# YTDapper — Audio/Video Downloader Interface
 
-This app uses `yt-dlp` for video downloading. If you don't have it installed system-wide, run the provided setup scripts. 
+This app uses `yt-dlp`. If you don't have it installed system-wide, run the provided setup scripts. 
 
 - **Windows:** Run `setup.bat`
 - **Linux/macOS:** Run `setup.sh`
