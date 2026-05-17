@@ -10,7 +10,6 @@ interface DownloadItem {
   quality: string;
   isAudioOnly: boolean;
 }
-//test
 interface CurrentDownloadsProps {
   downloads: DownloadItem[];
   onPause: (id: string) => void;

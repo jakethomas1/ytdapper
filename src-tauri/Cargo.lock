@@ -1499,24 +1499,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
-name = "hello-world"
-version = "0.1.0"
-dependencies = [
- "libc",
- "open",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-drag",
- "tauri-plugin-opener",
- "tauri-plugin-store",
- "tokio",
- "windows 0.58.0",
-]
-
-[[package]]
 name = "hermit-abi"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5543,6 +5525,24 @@ dependencies = [
  "quote",
  "syn 2.0.107",
  "synstructure",
+]
+
+[[package]]
+name = "ytdapper"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "open",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-drag",
+ "tauri-plugin-opener",
+ "tauri-plugin-store",
+ "tokio",
+ "windows 0.58.0",
 ]
 
 [[package]]
