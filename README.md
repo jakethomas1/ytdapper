@@ -3,15 +3,21 @@
 This app uses `yt-dlp`. If you don't have it installed system-wide, run the provided setup scripts. 
 
 ## Setup
-- **Windows:** Run [setup.bat](setup.bat) or install manually: `winget install yt-dlp`.
+- **Windows:** Run [setup.bat](setup.bat) or install manually by pasting this into your terminal:
+
+```bat
+winget install yt-dlp
+```
 ## Download
 
-| Platform | Installer |
-|----------|-----------|
-| Windows  | [YTDapper_1.0.0_x64-setup.exe](https://github.com/yourusername/ytdapper/releases/latest) (NSIS) |
-| Windows  | [YTDapper_1.0.0_x64.msi](https://github.com/yourusername/ytdapper/releases/latest) (MSI) |
+| Platform | Installer | Type
+|----------|-----------|-----------|
+| Windows  | [YTDapper_1.0.0_x64-setup.exe](https://github.com/jakethomas1/ytdapper/releases/latest) | (NSIS) |
+| Windows  | [YTDapper_1.0.0_x64.msi](https://github.com/jakethomas1/ytdapper/releases/latest) | (MSI) |
+| Debian/Ubuntu    | [YTDapper_1.0.0_amd64.deb](https://github.com/jakethomas1/ytdapper/releases/latest) | (apt / dpkg) |
+| Linux (All distros)     | [YTDapper_1.0.0_amd64.AppImage](https://github.com/jakethomas1/ytdapper/releases/latest) | (AppImage) |
+| Fedora/Red Hat    | [YTDapper_1.0.0-1.x86_64.rpm](https://github.com/jakethomas1/ytdapper/releases/latest) | (dnf / yum / rpm) |
 
-\
 \
 \
 \
