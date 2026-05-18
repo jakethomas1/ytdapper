@@ -43,11 +43,13 @@ function App() {
         const savedFolderName = await store.get<string>("folderName");
         const savedQuality = await store.get<string>("quality");
         const savedAlwaysOnTop = await store.get<boolean>("alwaysOnTop");
+        const savedIsAudioOnly = await store.get<boolean>("isAudioOnly");
 
         if (savedFolderPath) setFolderPath(savedFolderPath);
         if (savedFolderName) setDestination(savedFolderName);
         if (savedQuality) setQuality(savedQuality);
         if (savedAlwaysOnTop !== undefined) setAlwaysOnTop(savedAlwaysOnTop);
+        if (savedIsAudioOnly !== undefined) setIsAudioOnly(savedIsAudioOnly);
       } catch (e) {
         console.error("Failed to load settings:", e);
       }
@@ -119,12 +121,14 @@ function App() {
     appWindow.setAlwaysOnTop(alwaysOnTop);
   }, [alwaysOnTop]);
 
-  async function saveSettings(folder: string, folderName: string, qual: string) {
+  async function saveSettings(folder: string, folderName: string, qual: string, audioOnly: boolean) {
     try {
       const store = await load("settings.json", { autoSave: 300, defaults: {} });
       await store.set("folderPath", folder);
       await store.set("folderName", folderName);
       await store.set("quality", qual);
+      await store.set("isAudioOnly", audioOnly);
+      await store.save();
     } catch (e) {
       console.error("Failed to save settings:", e);
     }
@@ -142,7 +146,7 @@ function App() {
       const folderName = parts[parts.length - 1];
       setDestination(folderName);
       setFolderPath(selected);
-      saveSettings(selected, folderName, quality);
+      saveSettings(selected, folderName, quality, isAudioOnly);
     }
   }
 
@@ -299,13 +303,16 @@ function App() {
         onUrlChange={setUrl}
         onQualityChange={(newQuality) => {
           setQuality(newQuality);
-          saveSettings(folderPath, destination, newQuality);
+          saveSettings(folderPath, destination, newQuality, isAudioOnly);
         }}
         onAudioOnlyChange={(value) => {
           setIsAudioOnly(value);
+          let nextQuality = quality;
           if (value) {
-            setQuality("720");
+            nextQuality = "720";
+            setQuality(nextQuality);
           }
+          saveSettings(folderPath, destination, nextQuality, value);
         }}
         onDownload={handleDownload}
       />
