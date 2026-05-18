@@ -3,6 +3,7 @@
   "productName": "YTDapper",
   "version": "0.1.0",
   "identifier": "com.ytdapper",
+  "permissions": ["fs:allow-exists", "fs:allow-stat"],
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -24,8 +25,7 @@
       }
     ],
     "security": {
-      "csp": null,
-      "permissions": ["fs:allow-exists", "fs:allow-stat"]
+      "csp": null
     }
   },
   "bundle": {
