@@ -25,7 +25,7 @@
     ],
     "security": {
       "csp": null,
-      "permissions": ["fs:allow-exists", "fs:allow-stat"],
+      "permissions": ["fs:allow-exists", "fs:allow-stat"]
     }
   },
   "bundle": {
