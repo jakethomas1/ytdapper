@@ -14,7 +14,7 @@ interface DownloadItem {
   id: string;
   filename: string;
   progress: string;
-  status: "downloading" | "complete" | "error" | "cancelled" | "paused";
+  status: "downloading" | "complete" | "error" | "cancelled" | "paused" | "moved";
   folderPath: string;
   url: string;
   quality: string;
@@ -260,14 +260,14 @@ function App() {
     });
   }
 
-  function handleFolderMoved(id: string, newFolderPath: string) {
-  setDownloads((prev) =>
-    prev.map((d) => d.id === id ? { ...d, folderPath: newFolderPath } : d)
-  );
-}
+  function handleFolderMoved(id: string) {
+    setDownloads((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, status: "moved" } : d))
+    );
+  }
 
   function handleClearCompleted() {
-    setDownloads((prev) => prev.filter((d) => d.status !== "complete"));
+    setDownloads((prev) => prev.filter((d) => d.status !== "complete" && d.status !== "moved"));
     setHasCompleted(false);
   }
 

@@ -4,7 +4,7 @@ interface DownloadItem {
   id: string;
   filename: string;
   progress: string;
-  status: "downloading" | "complete" | "error" | "cancelled" | "paused";
+  status: "downloading" | "complete" | "error" | "cancelled" | "paused" | "moved";
   folderPath: string;
   url: string;
   quality: string;
@@ -17,7 +17,7 @@ interface CurrentDownloadsProps {
   onOpenFolder: (download: DownloadItem) => void;
   hasCompleted: boolean;
   onClearCompleted: () => void;
-  onFolderMoved: (id: string, newFolderPath: string) => void;
+  onFolderMoved: (id: string) => void;
 }
 
 function getFilePath(download: DownloadItem): string {
@@ -53,15 +53,12 @@ export default function CurrentDownloads({ downloads, onPause, onResume, onOpenF
 
         const filePath = getFilePath(download);
         try {
-          const result = await startDrag({
+          await startDrag({
             item: [filePath],
             icon: "../../src-tauri/icons/32x32.png",
             mode: "move",
           });
-
-          if (result?.dropLocation) {
-            onFolderMoved(download.id, result.dropLocation);
-          }
+          onFolderMoved(download.id);
         } catch (err) {
           console.error("Drag failed:", err);
         }
@@ -96,10 +93,10 @@ export default function CurrentDownloads({ downloads, onPause, onResume, onOpenF
               <div
                 tabIndex={0}
                 key={download.id}
-                className={`download-item download-item-${download.status}${isDraggable ? " download-item-draggable" : ""}`}
-                onDoubleClick={() => onOpenFolder(download)}
+                className={`download-item download-item-${download.status} ${isDraggable ? "download-item-draggable" : ""}`}
+                onDoubleClick={() => download.status !== "moved" && onOpenFolder(download)}
                 onMouseDown={(e) => handleMouseDown(e, download)}
-                title={fullPath}
+                title={download.status === "moved" ? "File moved" : fullPath}
               >
                 <span className="download-item-filename" title={fullPath}>{download.filename}</span>
                 <span className="download-item-progress">{download.progress}</span>
@@ -130,6 +127,13 @@ export default function CurrentDownloads({ downloads, onPause, onResume, onOpenF
                         <path d="M 24 4 C 12.972 4 4 12.972 4 24 C 4 35.028 12.972 44 24 44 C 35.028 44 44 35.028 44 24 C 44 20.791 43.222047 17.767172 41.873047 15.076172 L 39.628906 17.320312 C 40.508906 19.371312 41 21.629 41 24 C 41 33.374 33.374 41 24 41 C 14.626 41 7 33.374 7 24 C 7 14.626 14.626 7 24 7 C 28.446 7 32.485578 8.7292031 35.517578 11.533203 L 37.638672 9.4121094 C 34.061672 6.0651094 29.273 4 24 4 z M 39.470703 10.986328 A 1.50015 1.50015 0 0 0 38.439453 11.439453 L 21.5 28.378906 L 17.560547 24.439453 A 1.50015 1.50015 0 1 0 15.439453 26.560547 L 20.439453 31.560547 A 1.50015 1.50015 0 0 0 22.560547 31.560547 L 40.560547 13.560547 A 1.50015 1.50015 0 0 0 39.470703 10.986328 z"/>
                       </svg>
                     </button>)}
+                  {download.status === "moved" && (
+                    <div title="File has been moved." className="download-item-btn" style={{ cursor: 'default' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12l-5-5v3c-5 0-7 3-8 7 1.5-2.5 4-3 8-3v3l5-5z" fill="#FFD700"/>
+                      </svg>
+                    </div>
+                  )}
                 </div>
               </div>
             );

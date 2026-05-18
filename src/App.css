@@ -490,9 +490,19 @@ body {
   text-align: right;
 }
 
-.download-item-complete .download-item-progress {
+.download-item-complete .download-item-progress,
+.download-item-moved .download-item-progress {
   color: #6d9e6f;
-} /*#6d9e6f;*/
+}
+/*#6d9e6f;*/
+
+.download-item-complete .download-item-filename {
+  color: #d7fac9;
+}
+
+.download-item-moved .download-item-filename {
+  color: #FFD700;
+}
 
 .download-item-open {
   color: #6d9e6f;
