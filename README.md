@@ -1,6 +1,11 @@
+
+
+
+
 # YTDapper — Audio/Video Downloader Interface
 
 This app uses `yt-dlp`. If you don't have it installed system-wide, run the provided setup scripts. 
+<br>
 
 ## Setup
 - **Windows:** Run [setup.bat](setup.bat) or install manually by pasting this into your terminal:
@@ -8,6 +13,7 @@ This app uses `yt-dlp`. If you don't have it installed system-wide, run the prov
 ```bat
 winget install yt-dlp
 ```
+
 ## Download
 
 | Platform | Installer | Type
@@ -18,9 +24,11 @@ winget install yt-dlp
 | Linux (All distros)     | [YTDapper_1.0.0_amd64.AppImage](https://github.com/jakethomas1/ytdapper/releases/latest) | (AppImage) |
 | Fedora/Red Hat    | [YTDapper_1.0.0-1.x86_64.rpm](https://github.com/jakethomas1/ytdapper/releases/latest) | (dnf / yum / rpm) |
 
-\
-\
-\
+<br>
+<br>
+
+https://github.com/user-attachments/assets/eacedf3f-ef92-4b64-a40b-df7ec2307b22
+
 \
 \
 FAQ: \
