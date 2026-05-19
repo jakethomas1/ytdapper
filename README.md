@@ -2,6 +2,10 @@
 
 
 
+
+
+
+
 # YTDapper — Audio/Video Downloader Interface
 
 This app uses `yt-dlp`. If you don't have it installed system-wide, run the provided setup scripts. 
@@ -18,16 +22,16 @@ winget install yt-dlp
 
 | Platform | Installer | Type
 |----------|-----------|-----------|
-| Windows  | [YTDapper_1.0.0_x64-setup.exe](https://github.com/jakethomas1/ytdapper/releases/latest) | (NSIS) |
-| Windows  | [YTDapper_1.0.0_x64.msi](https://github.com/jakethomas1/ytdapper/releases/latest) | (MSI) |
-| Debian/Ubuntu    | [YTDapper_1.0.0_amd64.deb](https://github.com/jakethomas1/ytdapper/releases/latest) | (apt / dpkg) |
-| Linux (All distros)     | [YTDapper_1.0.0_amd64.AppImage](https://github.com/jakethomas1/ytdapper/releases/latest) | (AppImage) |
-| Fedora/Red Hat    | [YTDapper_1.0.0-1.x86_64.rpm](https://github.com/jakethomas1/ytdapper/releases/latest) | (dnf / yum / rpm) |
+| Windows  | [YTDapper_1.0.1_x64-setup.exe](https://github.com/jakethomas1/ytdapper/releases/latest) | (NSIS) |
+| Windows  | [YTDapper_1.0.1_x64.msi](https://github.com/jakethomas1/ytdapper/releases/latest) | (MSI) |
+| Debian/Ubuntu    | [YTDapper_1.0.1_amd64.deb](https://github.com/jakethomas1/ytdapper/releases/latest) | (apt / dpkg) |
+| Linux (All distros)     | [YTDapper_1.0.1_amd64.AppImage](https://github.com/jakethomas1/ytdapper/releases/latest) | (AppImage) |
+| Fedora/Red Hat    | [YTDapper_1.0.1-1.x86_64.rpm](https://github.com/jakethomas1/ytdapper/releases/latest) | (dnf / yum / rpm) |
 
 <br>
 <br>
 
-https://github.com/user-attachments/assets/eacedf3f-ef92-4b64-a40b-df7ec2307b22
+https://github.com/user-attachments/assets/07e1d350-daf0-4b81-9815-73b5f696e740
 
 \
 \
